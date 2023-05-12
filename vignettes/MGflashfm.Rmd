@@ -20,13 +20,13 @@ knitr::opts_chunk$set(
 
 Available in this package are:
 
-1. [MGflashfm](# MGFlashfm overview): for multi-group multi-trait fine-mapping
+1. [MGflashfm](#mgflashfm-overview): for multi-group multi-trait fine-mapping
 
-2. [MGfm](# MGfm overview): for multi-group fine-mapping of a single trait, in an analogous framework to MGflashfm
+2. [MGfm](#mgfm-overview): for multi-group fine-mapping of a single trait, in an analogous framework to MGflashfm
 
-3. [JAMdynamic](## Single-trait fine-mapping with JAMdynamic): for single-trait fine-mapping using our dynamic algorithm that adjusts the maximum number of causal variants, according to the data, so that out-of-sample reference panels, such as from the 1000 Genomes Project, may be used
+3. [JAMdynamic](#single-trait-fine-mapping-with-jamdynamic): for single-trait fine-mapping using our dynamic algorithm that adjusts the maximum number of causal variants, according to the data, so that out-of-sample reference panels, such as from the 1000 Genomes Project, may be used
 
-4. [FLASHFMwithJAMd](## Multi-trait fine-mapping with flashfm and JAMdynamic): flashfm multi-trait fine-mapping with JAMdynamic
+4. [FLASHFMwithJAMd](#multi-trait-fine-mapping-with-flashfm-and-jamdynamic): flashfm multi-trait fine-mapping with JAMdynamic
 
 
 All functions require the sample size for each trait within each group. We recommend finding the effective sample size for each trait in each group using the built-in effective sample size function: 
@@ -42,7 +42,7 @@ of SNPs in raf, and Vy is the trait variance, which is 1 by default, assuming tr
 This vignette introduces MGflashfm, MGfm, and JAMdynamic and gives illustrations of their use 
 on simulated data of two traits with a shared causal variant, that is the same in two groups. A simulated data set is provided in this MGflashfm R package.
 
-Simulated data are described [here](## Simulation Example), followed by illustrations:
+Simulated data are described [here](#simulation-example), followed by illustrations:
 
 
 
@@ -75,10 +75,10 @@ Flashfm could be run using one of the wrapper functions, FLASHFMwithJAMd or FLAS
 single-trait fine-mapping that provides models and their PPs (see Section 
 "Reference genotype covariance matrix, RAF vector, and FINEMAP results for each trait provided" of [flashfm](https://jennasimit.github.io/flashfm/articles/flashfm.html)).
 
-1. [Single-trait fine-mapping and flashfm have not been run on each group](### Single-trait fine-mapping and flashfm have not been run on each group) - need for each group: GWAS summary statistics for each trait, SNP correlation matrix, 
+1. [Single-trait fine-mapping and flashfm have not been run on each group](#single-trait-fine-mapping-and-flashfm-have-not-been-run-on-each-group) - need for each group: GWAS summary statistics for each trait, SNP correlation matrix, 
 and trait covariance matrix. In one command, MGFLASHFMwithJAM, run single-trait fine-mapping (using JAM) and flashfm, followed by MGflashfm. 
 
-2. [Flashfm has been run on each group](### Flashfm has been run on each group)
+2. [Flashfm has been run on each group](#flashfm-has-been-run-on-each-group)
 
 
 # MGfm overview
@@ -95,13 +95,13 @@ does single-trait fine-mapping of each group together with multi-group fine-mapp
 
 MGfm may be used when there is only one trait, or to compare results with MGflashfm.  Examples of running MGfm are illustrated for two settings, and we explain the third way:
 
-1. [Single-trait fine-mapping has not been run on each group](### MGfm: Single-trait fine-mapping has not been run on each group) - need for each group: GWAS summary statistics for the trait and SNP correlation matrix. 
+1. [Single-trait fine-mapping has not been run on each group](#mgfm-single-trait-fine-mapping-has-not-been-run-on-each-group) - need for each group: GWAS summary statistics for the trait and SNP correlation matrix. 
 In one command, MGFMwithJAM, run single-trait fine-mapping (using JAM) followed by MGflashfm.
 
 2. If MGflashfm has been run with the option flashfmRET=TRUE, so that flashfm output is available, then it is very quick to run MGfm, using the function
-MGflashfmRET. (See the second point in [Flashfm has been run on each group](### Flashfm has been run on each group))
+MGflashfmRET. (See the second point in [Flashfm has been run on each group](#flashfm-has-been-run-on-each-group))
 
-3. [Single-trait fine-mapping has been run using a method that outputs models and their PPs](### MGfm: Single-trait fine-mapping has been run on each group)
+3. [Single-trait fine-mapping has been run using a method that outputs models and their PPs](#mgfm-single-trait-fine-mapping-has-been-run-on-each-group)
 
 MGflashfm may be run on up to 6 traits, and both MGflashfm and MGfm are available for up to six groups. 
 
