@@ -1,0 +1,38 @@
+Package: MGflashfm
+Title: Multi-Group flexible and shared information fine-mapping (MGflashfm)
+Version: 0.0.0.9000
+Authors@R: 
+    c(person("Jenn", "Asimit", role=c("aut","cre"), email = "ja628@cam.ac.uk"),
+    person("Feng","Zhou", role=c("aut"), email="fengzhou.cambridge@gmail.com"))
+Maintainer: Jenn Asimit <ja628@cam.ac.uk> 
+Description: MGlashfm jointly fine-maps signals in multiple groups and several related quantitative traits, borrowing information 
+	     between traits in a Bayesian framework. MGfm is also available for fine-mapping signals across multiple studies for a single trait.
+	     These methods do not restrict analysis to the intersecting variants across studies, allowing detection of causal variants that may be present in a
+	     subset of studies due to low MAF or quality control.
+	     MGflashfm and MGfm output multi-group credible sets for each trait.
+Remotes:
+    pjnewcombe/R2BGLiMS,
+    jennasimit/flashfm
+Imports:
+    flashfm,
+    R2BGLiMS,
+    Matrix,
+    parallel,
+    rlist,
+    methods,
+    stats,
+    gtools
+Suggests:
+    roxygen2,
+    testthat,
+    devtools,
+    knitr,
+    rmarkdown
+License: GPL-3
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.1
+Depends: 
+    R (>= 2.10)
+LazyData: true
+VignetteBuilder: knitr

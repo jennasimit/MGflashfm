@@ -1,0 +1,428 @@
+---
+title: "MGflashfm: Multi-group Multi-trait Fine-mapping"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{MGflashfm: Multi-group Multi-trait Fine-mapping}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+ 
+# Introduction
+
+*MGflashfm* (multi-group flexible and shared information fine-mapping) is a package to simultaneously fine-map genetic associations for multiple quantitative traits across multiple groups. Each group consists of genetically similar individuals and may either be a single cohort or a meta-analysis of multiple genetically similar groups. It extends on the multi-trait fine-mapping framework of [flashfm](https://www.nature.com/articles/s41467-021-26364-y).
+
+Available in this package are:
+
+1. [MGflashfm](# MGFlashfm overview): for multi-group multi-trait fine-mapping
+
+2. [MGfm](# MGfm overview): for multi-group fine-mapping of a single trait, in an analogous framework to MGflashfm
+
+3. [JAMdynamic](## Single-trait fine-mapping with JAMdynamic): for single-trait fine-mapping using our dynamic algorithm that adjusts the maximum number of causal variants, according to the data, so that out-of-sample reference panels, such as from the 1000 Genomes Project, may be used
+
+4. [FLASHFMwithJAMd](## Multi-trait fine-mapping with flashfm and JAMdynamic): flashfm multi-trait fine-mapping with JAMdynamic
+
+
+All functions require the sample size for each trait within each group. We recommend finding the effective sample size for each trait in each group using the built-in effective sample size function: 
+
+```{r,eval=FALSE}
+N  <- Neff(raf, seB, Vy = 1) 
+```
+
+where raf is the reference (effect) allele frequency vector, seB is the vector of standard errors of the effect estimates in the same order 
+of SNPs in raf, and Vy is the trait variance, which is 1 by default, assuming traits are transformed to normal(0,1). 
+
+
+This vignette introduces MGflashfm, MGfm, and JAMdynamic and gives illustrations of their use 
+on simulated data of two traits with a shared causal variant, that is the same in two groups. A simulated data set is provided in this MGflashfm R package.
+
+Simulated data are described [here](## Simulation Example), followed by illustrations:
+
+
+
+
+
+# MGflashfm overview
+
+The MGflashfm framework builds on that of [flashfm](https://jennasimit.github.io/flashfm/articles/flashfm.html) for multi-trait fine-mapping, which leverages
+information between traits to improve precision when there are shared causal variant(s) between traits.
+Multi-group fine-mapping has potential to further improve precision of fine-mapping due to differences
+in linkage disequilibrium (LD) between diverse groups.
+
+MGflashfm makes use of summary-level data and requires as input: 
+ 
+- GWAS summary statistics (single-study or meta-analysis) from each group 
+- trait covariance matrix 
+- genotype covariance matrix for each group
+
+We note that MGflashfm makes use of input from flashfm, and flashfm requires single-trait fine-mapping results (models and their posterior probabilities). 
+Any single-trait fine-mapping method that outputs the SNP models and their posterior probabilities (PP), may be integrated with flashfm and MGflashfm.
+We provide a wrapper function, MGFLASHFMwithJAM, that integrates an expanded version of [JAM](https://onlinelibrary.wiley.com/doi/full/10.1002/gepi.21953) with
+flashfm. MGflashfm may also easily be run using output from FLASHFMwithFINEMAP, which is a wrapper function in the flashfm R package, that runs 
+[FINEMAP](https://academic.oup.com/bioinformatics/article/32/10/1493/1743040) with flashfm. 
+
+For an overview of the flashfm R package, see the [flashfm GitHub page](https://jennasimit.github.io/flashfm/).
+
+Details of how to run MGflashfm on your own data are explained through detailed examples for simulated data. 
+We illustrate two ways to run MGflashfm, depending on whether or not flashfm multi-trait fine-mapping results are available.
+Flashfm could be run using one of the wrapper functions, FLASHFMwithJAMd or FLASHFMwithFINEMAP, as well as any other 
+single-trait fine-mapping that provides models and their PPs (see Section 
+"Reference genotype covariance matrix, RAF vector, and FINEMAP results for each trait provided" of [flashfm](https://jennasimit.github.io/flashfm/articles/flashfm.html)).
+
+1. [Single-trait fine-mapping and flashfm have not been run on each group](### Single-trait fine-mapping and flashfm have not been run on each group) - need for each group: GWAS summary statistics for each trait, SNP correlation matrix, 
+and trait covariance matrix. In one command, MGFLASHFMwithJAM, run single-trait fine-mapping (using JAM) and flashfm, followed by MGflashfm. 
+
+2. [Flashfm has been run on each group](### Flashfm has been run on each group)
+
+
+# MGfm overview
+
+
+MGfm requires:
+
+- GWAS summary statistics (single-study or meta-analysis) from each group 
+- genotype covariance matrix for each group
+
+Similar to MGflashfm, MGfm requires single-trait fine-mapping results (models and their PPs) as input, but we provide a wrapper function MGFMwithJAM that
+does single-trait fine-mapping of each group together with multi-group fine-mapping.
+
+
+MGfm may be used when there is only one trait, or to compare results with MGflashfm.  Examples of running MGfm are illustrated for two settings, and we explain the third way:
+
+1. [Single-trait fine-mapping has not been run on each group](### MGfm: Single-trait fine-mapping has not been run on each group) - need for each group: GWAS summary statistics for the trait and SNP correlation matrix. 
+In one command, MGFMwithJAM, run single-trait fine-mapping (using JAM) followed by MGflashfm.
+
+2. If MGflashfm has been run with the option flashfmRET=TRUE, so that flashfm output is available, then it is very quick to run MGfm, using the function
+MGflashfmRET. (See the second point in [Flashfm has been run on each group](### Flashfm has been run on each group))
+
+3. [Single-trait fine-mapping has been run using a method that outputs models and their PPs](### MGfm: Single-trait fine-mapping has been run on each group)
+
+MGflashfm may be run on up to 6 traits, and both MGflashfm and MGfm are available for up to six groups. 
+
+# Simulation Example
+
+In this simulated data example, we simulate two groups and two traits. For Groups 1 and 2, Trait 1 and 2 each have two causal variants, of which one is shared;
+for each trait, the causal variants are the same across groups. The trait correlation is 0.4.
+
+For a region in chromosome 19:45386029-45439498 (GRCh37/hg19), containing APOE, 
+we used HapGen2 to generate two groups of individuals based on cohorts from the 1000 Genomes Project: 
+N1=90,000 based on CEU+TSI and N2=10,000 based on YRI+LWK. 
+Within each group, we retained variants with MAF > 0.001, regardless of whether the variant satisfies our MAF threshold in the other group.
+This resulted in 201 variants in Group 1 and 329 variants in Group 2; 132 variants appear in both groups and there are 398 unique variants present in at least one of the groups. 
+
+The SNP correlation matrices for Groups 1 and 2 are saved in the object corX.list, where corX.list[[i]] is the SNP correlation matrix from group i, i=1,2.
+In each group we simulate the two traits using the rmvnorm R function and the selected causal variants, which are saved in the cvs object. 
+
+The GWAS summary data in the required format are available in the object gwas.list, where gwas.list[[i]] is the list of trait GWAS results for group i, and 
+gwas.list[[i]][[j]] is the data.frame of GWAS results for Trait j in Group i. The format is shown below.
+
+
+```{r}
+library(MGflashfm)
+covY.list
+Nall
+lapply(gwas.list[[1]],head)
+```
+
+NOTE: For any of the methods "...withJAM", SNP names must not contain ":", which is a requirement of the original JAM algorithm.
+If SNP names are in the form "19:45301088_T_C" change to "chr19_45301088_T_C". 
+This could be done using the command 
+```{r,eval=FALSE}
+paste0("chr", gsub(":", "_", snpnames)
+```
+
+
+## MGflashfm and MGfm
+
+### Single-trait fine-mapping and flashfm have not been run on each group
+
+This example takes seconds to run since the output is saved as an object, mgmtCS, in the MGflashfm package - details follow.
+For each group, we need the SNP correlation matrix, trait covariance matrix, and gwas summary data (rsID, beta, EAF).
+
+The commands to run are as below, and for convenience the output from the MGFLASHFMwithJAM function is saved in the object mgmtCS. 
+The objects needed to run this, gwas.list, corX.list, covY.list, Nall, are also provided in this library.
+
+In order to use JAM for single-trait fine-mapping, the R2BGLiMS library must be loaded, in addition to MGflashfm.
+
+
+```{r,eval=FALSE} 
+library(R2BGLiMS)
+library(MGflashfm)
+#' Example code for how to construct gwas.list, corX.list, covY.list, Nall from Group data. These final objects are available in this package.
+#' gwas.list <- list(gwasg1.list,gwasg2.list)
+#' corX.list <- list(corXg1,corXg2)
+#' covY.list <-list(covYg1,covYg2)
+#' Nall <- list(Ng1,Ng2)
+save.path <- "Example/tmpDIR"
+dir.create(save.path) 
+#' NB If a directory is not provided in save.path, the function cannot run to completion.
+#' Set NCORES=no. of groups, if on non-Windows machine. If on Windows, set NCORES=1.
+#' Set multi=TRUE for multi-trait and multi=FALSE for single-trait
+#' Set flashfmRET=TRUE to return flashfm results for each group (these may then be used as input for other functions); FALSE otherwise 
+mgmtCS <- MGFLASHFMwithJAM(gwas.list, LD.list=corX.list, covY.list, Nall, multi=TRUE, TOdds=1, maxcv=1, maxcv_stop = 20, maxcv_autocheck = TRUE, 
+	save.path, cpp=0.99, cred=0.99,NCORES=2,jam.nM.iter=1,flashfmRET=TRUE) 
+``` 
+
+More specifically, the above arguments are:
+
+ - gwas.list: List of GWAS results for each trait in each group; gwas.list[[\ i\ ]][[\ j\ ]] is the results for Trait j in Group i and has 
+  3 columns named: rsID, beta, EAF; 
+if trait names are provided, these trait names are given in output;
+if group  names are provided, these group  names are given in the output.
+
+- LD.list: List of SNP correlation matrices for each group, groups must be in same order as in gwas.list; 
+LD.list[[\ i\ ]] is the SNP correlation matrix for group  i and must have snp names in row.names and col.names.
+
+-  covY.list: List of A trait covariance matrices for each Group, in same order as gwas.list; trait columns should be in same order as traits are listed in gwas.list[[\ i\ ]].
+
+-  Nall: List of components with same length as number of Studies: Nall[[\ i\ ]] is the M-vector of trait sample sizes for group  i, where M is the number of traits.
+
+-  multi: TRUE for multi-group  multi-trait fine-mapping; FALSE for multi-group  single-trait fine-mapping; default TRUE.
+
+-  TOdds: TOdds=1 is the default for flashfm which gives a 50/50 odds that the traits share at least one causal variant.
+
+-  maxcv: starting value for maximum number of causal variants.
+
+-  maxcv_stop: maximum value to consider for maximum number of causal variants.
+
+-  maxcv_autocheck: Logical for whether to incrementally increase maxcv (TRUE); if do not want to increment maxcv set this to FALSE.
+
+-  save.path: Path to save JAM output files; tmp files and could delete these later e.g. save.path=paste0(DIRout,"/tmpJAM/region1").
+
+-  cpp: cumulative posterior probability threshold for selecting top models; default 0.99.
+
+-  cred: Level for multi-group  credible set, default 0.99 for 99% credible sets.
+
+-  NCORES: number of cores for parallel computing; recommend NCORES=max(A,M), but if on Windows, use NCORES=1.
+
+-  jam.nM.iter: in millions, number of iterations to use in JAM; defailt 1 (i.e.: 1 million).
+
+-  flashfmRET: TRUE to return single-group  flashfm output; default FALSE.
+
+
+Look at the resulting 99% credible sets (CS99) and the causal variants to see that the causal variants are contained in the CS99 and have mgMPP > 0.9:
+
+```{r}
+ mgmtCS$CSsummary
+#' Trait 1 causal variants:
+ cvs[1:2]
+#' Trait 2 causal variants:
+cvs[-2] 
+```
+
+For each variant in the CS99, the output provides:
+
+ - mgMPP: the multi-group (trait-adjusted) marginal posterior probability of a SNP being casual
+ 
+ - maf_pooled: the pooled MAF based on the groups that contain the variant
+ 
+ - prop_group: the proportion of groups that contain the variant
+ 
+ - groups: the names of the groups that contain the variant.
+
+
+### Flashfm has been run on each group 
+
+Output from flashfm includes both single-trait and multi-trait results within the group, which may then be used to obtain results from MGflashfm or MGfm.
+ 
+1. If flashfm has already been run on each group, using either FLASHFMwithJAMd or FLASHFMwithFINEMAP, then set flashfm.list = list(flashfmG1,flashfmG2), 
+where flashfmG1 is the output for Group 1 and flashfmG2 is the output for Group 2; up to 6 groups may be included.
+
+```{r,eval=FALSE}
+#' Set multi=TRUE for multi-trait and multi=FALSE for single-trait
+#' If using non-Windows machine, can set NCORES=2 for speed	
+#' an example of flashfm output is available at mgmtCS$flashfm.out
+flashfm.list=mgmtCS$flashfm.out
+mgCS <- MGflashfmRET(gwas.list,flashfm.list=flashfm.list,Nall,cred=0.99,multi=FALSE,cpp=0.99,NCORES=1) 
+```
+
+2. Alternatively, if MGFLASHFMwithJAM has already been run with flashfmRET=TRUE (as above), the flashfm results from each group will be returned in the object mgmtCS\$flashm.out, 
+where mgmtCS\$flashm.out[[i]] is the set of flashfm results for Group i. These flashfm results may be used as input to MGflashfmRET. 
+```{r}
+#' Set multi=TRUE for multi-trait and multi=FALSE for single-trait
+#' If using Windows machine, set NCORES=1 
+mgCS <- MGflashfmRET(gwas.list,flashfm.list=mgmtCS$flashfm.out,Nall,cred=0.99,multi=FALSE,cpp=0.99,NCORES=2) 
+```
+
+Look at the resulting 99% credible sets (CS99) and the causal variants to see that the causal variants are contained in the CS99 and have mgMPP > 0.8:
+
+```{r}
+ mgCS$CSsummary
+#' Trait 1 causal variants:
+ cvs[1:2]
+#' Trait 2 causal variants:
+cvs[-2] 
+```
+
+
+
+### MGfm: Single-trait fine-mapping has not been run on each group
+```{r,eval=FALSE} 
+T1gwas.list <- list(gwas.list[[1]][[1]], gwas.list[[2]][[1]])
+N1all <- sapply(Nall,function(x) x[1])
+# Set NCORES=no. of groups, if on non-Windows machine. If on Windows, set NCORES=1.
+mgCS1 <- MGFMwithJAM(T1gwas.list, corX.list,  N1all, save.path,cpp=0.99,cred=0.99, maxcv=1, maxcv_stop = 20, maxcv_autocheck = TRUE,NCORES=2,jam.nM.iter=1)
+``` 
+
+The output from mgCS1 is identical to the Trait 1 results in mgCS, as these are multi-group single-trait fine-mapping results, so we do not save them separately. 
+The difference between running MGFLASHFMwithJAM with multi=FALSE and MGFMwithJAM is that MGFMwithJAM is used for only a single trait, independently of the other traits, 
+while MGFLASHFMwithJAM with multi=FALSE will run MGfm on each trait using the same variants that would be used in multi-trait fine-mapping. 
+If only a single trait is of interest, then MGFMwithJAM will give multi-group fine-mapping results, independently of other traits.
+ 
+Here, the lines run to create mgCS give the MGfm results for Traits 1 and 2, and mgCS1 only gives the results for Trait 1.
+In particular, if the above lines were run then we would have 
+mgCS1\$CSsummary = mgCS\$CSsummary[[1]]
+and 
+mgCS1\$CSdetail\$details = mgCS\$CSdetail\$details[[1]].
+
+
+### MGfm: Single-trait fine-mapping has been run on each group
+
+The single-trait fine-mapping results for each group should follow the format of the object g2t1CS, where models are given as row names in a data.frame of model PP.
+Variants within models are separated by "%".
+```{r}
+head(g2t1CS$PP)
+```
+Then, the following command may be used, where 
+
+ - g1PP is the single-trait results for Group 1 and g2PP is for Group 2
+
+ - gwas.list[[\ i\ ]][[\ j\ ]] is the data.frame of GWAS results for Group i, Trait j
+ 
+```{r,eval=FALSE}
+#' stfm.list = list(g1PP,g2PP)
+#' isnps = Reduce(union,list(gwas.list[[1]][[1]]$rsID,gwas.list[[2]][[1]]$rsID)) #' up to 6 groups 
+#' N = c(N1,N2)
+mgCS1 <- MGfm(stfm.list,isnps,N,cred=.99,cpp=0.99)
+```
+
+## Single-trait fine-mapping with JAMdynamic
+This approach builds on the orignal JAM algorithm, but has been extended (as in flashfm) so that no variants are excluded from fine-mapping, and further extended
+such that the maximum number of causal variants is learned from the data. This provides a practical approach to fine-mapping with out-of-sample data (e.g. 1000 Genomes) and it 
+favours small models, following a parsimonious principle.
+
+
+JAMdynamic requires:
+
+- GWAS summary statistics (single-study or meta-analysis) from a group 
+- genotype covariance matrix for the group
+
+
+This example applies JAMdynamic to Trait 1 in Group 2, so it requires the Group 2 SNP correlation matrix and the Group 2 Trait 1 GWAS data and sample size. 
+The output from below is provided in the object g2t1CS.
+
+```{r,eval=FALSE} 
+g2t1CS <- JAMdynamic(gwas=gwas.list[[2]][[1]],corX=corX.list[[2]], ybar=0, Vy=1, N=Nall[[2]][1], cred=.99, save.path=save.path, maxcv=1, maxcv_stop = 20, maxcv_autocheck = TRUE,jam.nM.iter=1)
+#' equivalent to below, by making use of default values
+g2t1CS <- JAMdynamic(gwas=gwas.list[[2]][[1]],corX=corX.list[[2]], N=Nall[[2]][1], save.path=save.path)
+``` 
+
+The arguments above are as follows:
+
+	- gwas:  GWAS data frame for the single Trait in a single Group.
+	
+	- corX: SNP correlation matrix for the Group.
+	
+	- ybar: trait mean, the default is 0.
+	
+	- Vy: trait variance, the default is 1.
+	
+	- N: sample sizes for Trait (could use Neff function to get this value).
+	
+	- save.path lists a path to a directory to save the intermediate files generated by JAM. This directory can be created within R using the command dir.create(save.path).
+
+	- maxcv = 1 is the start value for the maximum number of causal variants.
+
+	- maxcv_stop = 20 is the absolute maximum number of causal variants (iterate from maxcv to at most maxcv_stop).
+
+	- maxcv_autocheck = TRUE indicates that the maximum number of casual variants is dynamic and will be between maxcv and maxcv_stop; if FALSE, there is no iteration and the maximum number of causal variants is maxcv.
+
+	- jam.nM.iter: the number of iterations (in millions) for JAM, the default is 1 (i.e.: 1 Million)
+
+The CS99 for Group 2 Trait 1 is below:
+
+```{r}
+g2t1CS$CS 
+```
+
+## Multi-trait fine-mapping with flashfm and JAMdynamic
+
+This example applies the wrapper function for flashfm with JAMdynamic to the two traits in Group 2. 
+It requires: 
+	
+	- gwas.list: list of GWAS data frames for the traits in a single Group.
+	
+	- corX: SNP correlation matrix for the Group.
+	
+	- ybar: vector of trait means, could use vector of zeros ybar <- rep(0,M) for M traits having mean 0.
+	
+	- N: vector of sample sizes for Traits 1 and 2 (could use Neff function to get these values), in same order as gwas.list.
+	
+	- save.path lists a path to a directory to save the intermediate files generated by JAM. This directory can be created within R using the command dir.create(save.path).
+
+	- TOdds=1 is the default for flashfm which gives a 50/50 odds that the traits share at least one causal variant.
+	
+	- covY: Trait covariance matrix for the Group, in same order as gwas.list.
+	
+	- cpp=0.99 is the default for flashfm which prioritises single-trait fine-mapping models with cumulative posterior probability 0.99.
+
+	- NCORES is set to the number of traits to allow parallel processing in flashfm, though if on a Windows machine use NCORES=1.
+
+	- maxcv = 1 is the start value for the maximum number of causal variants.
+
+	- maxcv_stop = 20 is the absolute maximum number of causal variants (iterate from maxcv to at most maxcv_stop).
+
+	- maxcv_autocheck = TRUE indicates that the maximum number of casual variants is dynamic and will be between maxcv and maxcv_stop; if FALSE, there is no iteration and the maximum number of causal variants is maxcv.
+
+	- jam.nM.iter: the number of iterations (in millions) for JAM, the default is 1 (i.e.: 1 Million)
+
+
+```{r,eval=FALSE} 
+# Set NCORES=no. of traits, if on non-Windows machine. If on Windows, set NCORES=1.
+#' Group 1 multi-trait fine-mapping with flashfm
+mtg1 <- FLASHFMwithJAMd(gwas.list[[1]], corX.list[[1]], ybar=c(0,0), Nall[[1]], save.path, TOdds = 1, covY.list[[1]], 
+    cpp = 0.99, NCORES=2, maxcv=1, maxcv_stop = 20, maxcv_autocheck = TRUE,jam.nM.iter=1)  
+mtg1CS <- allcredsetsPP(mtg1$mpp.pp,cred=.99)      
+#' Group 2 multi-trait fine-mapping with flashfm
+mtg2 <- FLASHFMwithJAMd(gwas.list[[2]], corX.list[[2]], ybar=c(0,0), Nall[[2]], save.path, TOdds = 1, covY.list[[2]], 
+    cpp = 0.99, NCORES=2, maxcv=1, maxcv_stop = 20, maxcv_autocheck = TRUE,jam.nM.iter=1)  
+mtg2CS <- allcredsetsPP(mtg2$mpp.pp,cred=.99)      
+``` 
+
+The flashfm output is available in mgmtCS\$flashfm.out, for Trait i (i=1,2), mgmtCS\$flashfm.out[[i]]\$mpp.pp, and the resulting SNP groups are in mgmtCS\$flashfm.out[[i]]\$snpGroups.
+If the above commands had been run, for Group 2, we would have mtg2\$mpp.pp = mgmtCS\$flashfm.out[[2]]\$mpp.pp and mtg2\$snpGroups = mgmtCS\$flashfm.out[[2]]\$snpGroups.
+
+To obtain credible sets for each trait, use the *allcredsetsPP* command, as above. This outputs credible sets for each trait, using single-trait fine-mapping (\$fm)
+and flashfm (\$flashfm) results. Here, we construct flashfm CS99 using the pre-saved flashfm output in mgmtCS.
+
+```{r}
+#' Trait 1
+mtg1 <- vector("list",2)
+mtg1$mpp.pp = mgmtCS$flashfm.out[[1]]$mpp.pp
+mtg1$snpGroups = mgmtCS$flashfm.out[[1]]$snpGroups
+mtg1CS <- allcredsetsPP(mtg1$mpp.pp,cred=.99) 
+#' single-trait CS99 for the two traits 
+mtg1CS$fm
+#' multi-trait CS99 for the two traits 
+mtg1CS$flashfm
+```
+
+```{r}
+#' Trait 2
+mtg2 <- vector("list",2)
+mtg2$mpp.pp = mgmtCS$flashfm.out[[2]]$mpp.pp
+mtg2$snpGroups = mgmtCS$flashfm.out[[2]]$snpGroups
+mtg2CS <- allcredsetsPP(mtg2$mpp.pp,cred=.99) 
+#' single-trait CS99 for the two traits 
+mtg2CS$fm
+#' multi-trait CS99 for the two traits 
+mtg2CS$flashfm
+```
+
+
