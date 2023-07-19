@@ -203,7 +203,9 @@ JAMmulti2 <- function (gwas.list, corX, ybar, Vy, N, r2 = 0.99, save.path, maxcv
     reftags <- cor.refdata2(corX, r2)
     refGt <- reftags$refG
     taglist <- reftags$taglist
-    refG <- make.nonpos.def(refGt)
+
+ 	refG <- lqmm::make.positive.definite(refGt)
+ 	   
     out <- list(SM = NULL, mbeta = NULL, Nlist = Nlist)
     out$SM <- vector("list", M)
     names(out$SM) <- ts
@@ -328,10 +330,15 @@ FLASHFMwithJAMd <- function (gwas.list, corX, ybar, N, save.path, TOdds = 1, cov
     M <- length(ybar)
     if(M>6 | M<2) stop("Need at least 2 and at most 6 traits.")
     Vy <- diag(covY)
+    corX <- as.matrix(corX)
+    if(!dir.exists(save.path)) {
+     message(c("Directory ",save.path," does not exist. Creating directory ",save.path))
+     dir.create(save.path)
+     }
     tmpdir <- paste0(save.path, "/tmp",sample(1:1000,1))   
     dir.create(tmpdir) 
-    main.input <- JAMmulti.tries(gwas.list, corX, ybar, Vy, 
-        N, tmpdir, maxcv=maxcv,maxcv_stop = maxcv_stop,maxcv_autocheck=maxcv_autocheck,jam.nM.iter=jam.nM.iter)
+    main.input <- JAMmulti2(gwas.list, corX, ybar, Vy, N, 
+            r2 = 0.99, save.path,maxcv=maxcv,maxcv_stop = maxcv_stop, maxcv_autocheck = maxcv_autocheck,jam.nM.iter=jam.nM.iter)
     gc(verbose = FALSE)
     ss.stats <- summaryStats(Xmat = FALSE, ybar.all = ybar, main.input = main.input)
     if(M<6) {
@@ -374,15 +381,21 @@ FLASHFMwithJAMd <- function (gwas.list, corX, ybar, N, save.path, TOdds = 1, cov
 #' @author Feng Zhou
 JAMdynamic <- function(gwas, corX, ybar=0, Vy=1, N, cred=.99, save.path, maxcv=1, maxcv_stop = 20, maxcv_autocheck = TRUE,jam.nM.iter=1){
  
+  if(!dir.exists(save.path)) {
+     message(c("Directory ",save.path," does not exist. Creating directory ",save.path))
+     dir.create(save.path)
+     }
+ 
  beta1 <- gwas[,"beta"] 
  raf <- gwas[,"EAF"]
  names(beta1) <- names(raf) <- gwas[,"rsID"]
+ corX <- as.matrix(corX)
  ksnp <- intersect(colnames(corX),names(raf))
  beta1 <- beta1[ksnp]
  raf <- raf[ksnp]
  corX <- corX[ksnp,ksnp]
  
- fm <- JAMcor.tries.maxcv(beta1, corX, raf, ybar, Vy, N, save.path, maxcv=1, maxcv_stop = 20, maxcv_autocheck = TRUE,jam.nM.iter=1)
+ fm <- JAMcor.tries.maxcv(beta1, corX, raf, ybar, Vy, N, save.path, maxcv=maxcv, maxcv_stop = maxcv_stop, maxcv_autocheck = maxcv_autocheck,jam.nM.iter=jam.nM.iter)
  ind <- order(fm$PP, decreasing = TRUE)
  pp <- fm$PP[ind]
  mod <- rownames(fm)[ind]
@@ -407,7 +420,8 @@ JAMcor.tries.maxcv <- function(beta1, corX, raf, ybar, Vy, N, save.path, maxcv=1
     
     tryCatch({
       
-      JAM_output <- JAMcor.tries(beta1, corX, raf, ybar, Vy, N, save.path, maxcv = maxcv,maxcv_stop = maxcv_stop, maxcv_autocheck = maxcv_autocheck,jam.nM.iter=jam.nM.iter)
+      JAM_output <- JAMexpandedCor2(beta1, corX, raf, ybar, Vy, N, 
+            r2 = 0.99, save.path,maxcv=maxcv, maxcv_stop = maxcv_stop, maxcv_autocheck = maxcv_autocheck,jam.nM.iter=jam.nM.iter)
         
       maxcv_autocheck = FALSE
       print(paste0('Completed the process when ..., maxcv == ', maxcv))
@@ -547,8 +561,9 @@ JAMexpandedCor2 <- function (beta1, corX, raf, ybar, Vy, N, r2 = 0.99, save.path
     reftags <- cor.refdata2(corX, r2)
     refGt <- reftags$refG
     taglist <- reftags$taglist
-    refG <- make.nonpos.def(refGt)
 
+		refG <- lqmm::make.positive.definite(refGt)
+		
         BETA <- beta1[colnames(refG)]
         mafs.ref <- maf[colnames(refG)]
 		 topmods <- JAM.tries.maxcv(BETA,Vy,refG,mafs.ref,N,save.path,maxcv=maxcv, maxcv_stop = maxcv_stop, maxcv_autocheck = maxcv_autocheck,jam.nM.iter=jam.nM.iter)

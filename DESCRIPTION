@@ -21,7 +21,8 @@ Imports:
     rlist,
     methods,
     stats,
-    gtools
+    gtools,
+    lqmm
 Suggests:
     roxygen2,
     testthat,

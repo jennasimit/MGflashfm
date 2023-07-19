@@ -27,6 +27,7 @@ best.snps <- flashfm:::best.snps
 #' @importFrom methods is new
 #' @importFrom stats as.dendrogram as.dist cor cov2cor hclust is.leaf quantile median
 #' @importFrom parallel mclapply
+#' @importFrom lqmm make.positive.definite
 #' @import flashfm 
 #' @import R2BGLiMS
 

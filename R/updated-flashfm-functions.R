@@ -1,26 +1,3 @@
-make.nonpos.def <- function (refG) 
-{
-    origMat <- refG
-    origEig <- eigen(origMat)
-    cholStatus <- try(u <- chol(origMat), silent = TRUE)
-    cholError <- ifelse(class(cholStatus)[1] == "try-error", TRUE, 
-        FALSE)
-    newMat <- origMat
-    iter <- 0
-    while (cholError) {
-        iter <- iter + 1
-        newEig <- eigen(newMat)
-        newEig2 <- ifelse(newEig$values < 0, 0, newEig$values)
-        newMat <- newEig$vectors %*% diag(newEig2) %*% t(newEig$vectors)
-        newMat <- newMat/sqrt(diag(newMat) %*% t(diag(newMat)))
-        cholStatus <- try(u <- chol(newMat), silent = TRUE)
-        cholError <- ifelse(class(cholStatus)[1] == "try-error", 
-            TRUE, FALSE)
-    }
-    colnames(newMat) <- rownames(newMat) <- colnames(refG)
-    refG <- newMat
-    return(refG)
-}
 
 best.models.cpp <- function (d, cpp.thr = 0.99, maxmod = NULL) {
 	old.cpp = cpp.thr
