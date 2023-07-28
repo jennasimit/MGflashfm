@@ -198,14 +198,16 @@ JAMmulti2 <- function (gwas.list, corX, ybar, Vy, N, r2 = 0.99, save.path, maxcv
     	beta1[[i]] <- beta1[[i]][snps]
     	raf1[[i]] <- raf1[[i]][snps]
     	}
+    corX <- as.matrix(corX)	
     corX <- corX[snps, snps]    
     nsnps <- length(snps)
+    corX <- as.matrix(corX)	
     reftags <- cor.refdata2(corX, r2)
-    refGt <- reftags$refG
+    refGt <- as.matrix(reftags$refG)
     taglist <- reftags$taglist
 
  	refG <- lqmm::make.positive.definite(refGt)
- 	   
+ 	refG <- as.matrix(refG)   
     out <- list(SM = NULL, mbeta = NULL, Nlist = Nlist)
     out$SM <- vector("list", M)
     names(out$SM) <- ts
