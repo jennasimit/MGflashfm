@@ -351,14 +351,12 @@ FLASHFMwithJAMd <- function (gwas.list, corX, ybar, N, save.path, TOdds = 1, cov
      fm.multi <- flashfmU(main.input, TOdds = TOdds, covY, ss.stats, 
         cpp = cpp, maxmod = NULL, fastapprox = TRUE, NCORES = NCORES)
     }
-    snpGroups <- makeSNPgroups2(main.input, fm.multi, is.snpmat = FALSE, 
+    snpGroups <- makeSNPgroups2U(main.input, fm.multi, is.snpmat = FALSE, 
         min.mppi = 0.01, minsnpmppi = 0.01, r2.minmerge = 0.6)
     mpp.pp <- PPsummarise(fm.multi, snpGroups, minPP = 0.01)
     unlink(paste0(tmpdir,"/*"))
     return(list(mpp.pp = mpp.pp, snpGroups = snpGroups))
 }
-
-
 
 
 

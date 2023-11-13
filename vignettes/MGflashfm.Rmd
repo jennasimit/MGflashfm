@@ -18,6 +18,13 @@ knitr::opts_chunk$set(
 
 *MGflashfm* (multi-group flexible and shared information fine-mapping) is a package to simultaneously fine-map genetic associations for multiple quantitative traits across multiple groups. Each group consists of genetically similar individuals and may either be a single cohort or a meta-analysis of multiple genetically similar groups. It extends on the multi-trait fine-mapping framework of [flashfm](https://www.nature.com/articles/s41467-021-26364-y).
 
+For more details, please see:
+
+F Zhou, O Soremekun, T Chikowore, S Fatumo, I Barroso, AP Morris, JL Asimit. (2023). 
+Leveraging information between multiple population groups and traits improves fine-mapping resolution. 
+*Nature Communications* 14, 7279 https://doi.org/10.1038/s41467-023-43159-5 [PDF](https://rdcu.be/dqW25)
+
+
 Available in this package are:
 
 1. [MGflashfm](#mgflashfm-overview): for multi-group multi-trait fine-mapping

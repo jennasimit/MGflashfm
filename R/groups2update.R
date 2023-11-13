@@ -47,7 +47,7 @@ return(snpgroups)
 #' @export
 makeSNPgroups2U <- function(main.input,fm.multi,is.snpmat,min.mppi = 0.01,minsnpmppi=0.001,r2.minmerge=0.5) {
 snp.data <- main.input$Gmat
-
+M <- length(fm.multi$PP)
 #SMlist <- main.input$SM
 #if(is.snpmat) { Xmat <- new("SnpMatrix",round(snp.data+1)) 
 #} else {Xmat <- as.matrix(snp.data) } 

@@ -14,6 +14,13 @@ The goal of MGflashfm is to use GWAS summary statistics to jointly fine-map gene
 related quantitative traits across multiple population groups. MGfm is also available to fine-map genetic associations
 for a single quantitative trait across multiple population groups.
 
+For more details, please see:
+
+F Zhou, O Soremekun, T Chikowore, S Fatumo, I Barroso, AP Morris, JL Asimit. (2023). 
+Leveraging information between multiple population groups and traits improves fine-mapping resolution. 
+*Nature Communications* 14, 7279 https://doi.org/10.1038/s41467-023-43159-5 [PDF](https://rdcu.be/dqW25)
+
+
 Website available at: https://jennasimit.github.io/MGflashfm/
 
 We have applied these methods to GWAS results from four lipids traits and five population groups, as made available by
