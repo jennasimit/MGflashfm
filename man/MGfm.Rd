@@ -18,7 +18,7 @@ MGfm(stfm.list, isnps, N, cred = 0.99, cpp = 0.99)
 \item{cpp}{cumulative posterior probability threshold for selecting top models; default 0.99}
 }
 \value{
-List of three objects: summary: data.frame of variants that belong to the credible set and their multi-group MPP (msMPP), details: list of msMPP for all variants and msPP for the top multi-group models, cred:credible set level
+List of three objects: summary: data.frame of variants that belong to the credible set and their multi-group MPP (mgMPP), details: list of mgMPP for all variants and mgPP for the top multi-group models, cred:credible set level
 }
 \description{
 Multi-Group Single-Trait Fine-Mapping credible sets

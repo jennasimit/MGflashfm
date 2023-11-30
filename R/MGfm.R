@@ -4,7 +4,7 @@
 #' @param N Vector of sample sizes in same order as groups in stfm.list
 #' @param cred Level for credible set, default 0.99 
 #' @param cpp cumulative posterior probability threshold for selecting top models; default 0.99
-#' @return List of three objects: summary: data.frame of variants that belong to the credible set and their multi-group MPP (msMPP), details: list of msMPP for all variants and msPP for the top multi-group models, cred:credible set level
+#' @return List of three objects: summary: data.frame of variants that belong to the credible set and their multi-group MPP (mgMPP), details: list of mgMPP for all variants and mgPP for the top multi-group models, cred:credible set level
 #' @author Jenn Asimit
 #' @export
 MGfm <- function(stfm.list,isnps,N,cred=.99,cpp=0.99) {
@@ -100,7 +100,7 @@ PPn <- logPP
    
  	tampp <- sort(out$taMPP,decreasing=T)
     tapp <- out$taPP[order(out$taPP[,1],decreasing=T),,drop=F]
-    sg <- data.frame(msMPP=tampp[out$cs])
+    sg <- data.frame(mgMPP=tampp[out$cs])
 	sg <- sg[order(sg[,1],decreasing=T),,drop=FALSE]
 	} else{
 	sg <- NULL; tampp <- NULL; tapp <- NULL
@@ -126,9 +126,9 @@ return(list(summary=sg,details=list(mgMPP=tampp,mgPP=tapp),cred=cred))
 #' @param maxcv_autocheck Logical for whether to incrementally increase maxcv (TRUE); if do not want to increment maxcv set this to FALSE
 #' @param NCORES number of cores for parallel computing; recommend NCORES=A, but if on Windows, use NCORES=1
 #' @param jam.nM.iter in millions, number of iterations to use in JAM; defailt 1 (1 million)
-#' @return List consisting of two objects: CSsummary = List of one data.frame for each trait; each trait data.frame gives the variants in the multi-group  credible set for the trait, the msMPP, pooled MAF, proportion of studies 
+#' @return List consisting of two objects: CSsummary = List of one data.frame for each trait; each trait data.frame gives the variants in the multi-group  credible set for the trait, the mgMPP, pooled MAF, proportion of studies 
 #' that contain the variant, names of studies that contain the variant
-#' CSdetail = \[\[1\]\] a list of multi-group  credible sets (variants and their msMPP), one for each trait; \[\[2\]\] details = for each trait, list of all multi-group  models and variants and their msPP, msMPP
+#' CSdetail = \[\[1\]\] a list of multi-group  credible sets (variants and their mgMPP), one for each trait; \[\[2\]\] details = for each trait, list of all multi-group  models and variants and their mgPP, mgMPP
 #' @author Jenn Asimit
 #' @export
 MGFMwithJAM <- function(gwas.list, corX.list,  Nall, save.path,cpp=0.99,cred=0.99, maxcv=1, maxcv_stop = 20, maxcv_autocheck = TRUE,NCORES=1,jam.nM.iter=1) {

@@ -42,9 +42,9 @@ MGFMwithJAM(
 \item{jam.nM.iter}{in millions, number of iterations to use in JAM; defailt 1 (1 million)}
 }
 \value{
-List consisting of two objects: CSsummary = List of one data.frame for each trait; each trait data.frame gives the variants in the multi-group  credible set for the trait, the msMPP, pooled MAF, proportion of studies
+List consisting of two objects: CSsummary = List of one data.frame for each trait; each trait data.frame gives the variants in the multi-group  credible set for the trait, the mgMPP, pooled MAF, proportion of studies
 that contain the variant, names of studies that contain the variant
-CSdetail = [[1]] a list of multi-group  credible sets (variants and their msMPP), one for each trait; [[2]] details = for each trait, list of all multi-group  models and variants and their msPP, msMPP
+CSdetail = [[1]] a list of multi-group  credible sets (variants and their mgMPP), one for each trait; [[2]] details = for each trait, list of all multi-group  models and variants and their mgPP, mgMPP
 }
 \description{
 Wrapper for credible sets from Multi-Group Single-Trait Fine-Mapping with JAM

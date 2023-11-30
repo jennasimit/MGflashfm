@@ -271,6 +271,8 @@ cvs[-2]
 
 ### MGfm: Single-trait fine-mapping has not been run on each group
 ```{r,eval=FALSE} 
+library(R2BGLiMS)
+library(MGflashfm)
 T1gwas.list <- list(gwas.list[[1]][[1]], gwas.list[[2]][[1]])
 N1all <- sapply(Nall,function(x) x[1])
 # Set NCORES=no. of groups, if on non-Windows machine. If on Windows, set NCORES=1.
@@ -325,6 +327,8 @@ This example applies JAMdynamic to Trait 1 in Group 2, so it requires the Group 
 The output from below is provided in the object g2t1CS.
 
 ```{r,eval=FALSE} 
+library(R2BGLiMS)
+library(MGflashfm)
 g2t1CS <- JAMdynamic(gwas=gwas.list[[2]][[1]],corX=corX.list[[2]], ybar=0, Vy=1, N=Nall[[2]][1], cred=.99, save.path=save.path, maxcv=1, maxcv_stop = 20, maxcv_autocheck = TRUE,jam.nM.iter=1)
 #' equivalent to below, by making use of default values
 g2t1CS <- JAMdynamic(gwas=gwas.list[[2]][[1]],corX=corX.list[[2]], N=Nall[[2]][1], save.path=save.path)
@@ -391,6 +395,8 @@ It requires:
 
 
 ```{r,eval=FALSE} 
+library(R2BGLiMS)
+library(MGflashfm)
 # Set NCORES=no. of traits, if on non-Windows machine. If on Windows, set NCORES=1.
 #' Group 1 multi-trait fine-mapping with flashfm
 mtg1 <- FLASHFMwithJAMd(gwas.list[[1]], corX.list[[1]], ybar=c(0,0), Nall[[1]], save.path, TOdds = 1, covY.list[[1]], 
