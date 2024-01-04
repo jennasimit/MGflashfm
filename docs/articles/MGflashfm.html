@@ -107,6 +107,21 @@ each group using the built-in effective sample size function:</p>
 the vector of standard errors of the effect estimates in the same order
 of SNPs in raf, and Vy is the trait variance, which is 1 by default,
 assuming traits are transformed to normal(0,1).</p>
+<p><strong>Notes for using JAMdynamic and any of the methods
+“…withJAM”</strong>:</p>
+<ol style="list-style-type: decimal">
+<li>SNP names must not contain “:”, which is a requirement of the
+original JAM algorithm. If SNP names are in the form “19:45301088_T_C”
+change to “chr19_45301088_T_C”. This could be done using the
+command</li>
+</ol>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">paste0</span>(<span class="st">"chr"</span>, <span class="fu">gsub</span>(<span class="st">":"</span>, <span class="st">"_"</span>, snpnames)</span></code></pre></div>
+<ol start="2" style="list-style-type: decimal">
+<li>The R2BGLiMS library must be loaded together with MGflashfm:</li>
+</ol>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">R2BGLiMS</span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">MGflashfm</span><span class="op">)</span></span></code></pre></div>
 <p>This vignette introduces MGflashfm, MGfm, and JAMdynamic and gives
 illustrations of their use on simulated data of two traits with a shared
 causal variant, that is the same in two groups. A simulated data set is
@@ -219,7 +234,7 @@ the cvs object.</p>
 object gwas.list, where gwas.list[[i]] is the list of trait GWAS results
 for group i, and gwas.list[[i]][[j]] is the data.frame of GWAS results
 for Trait j in Group i. The format is shown below.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">MGflashfm</span><span class="op">)</span></span>
 <span><span class="va">covY.list</span></span>
 <span><span class="co">#&gt; [[1]]</span></span>
@@ -255,11 +270,6 @@ for Trait j in Group i. The format is shown below.</p>
 <span><span class="co">#&gt; chr19_45386467_G_GTAA chr19_45386467_G_GTAA -0.2500440 0.12608889</span></span>
 <span><span class="co">#&gt; chr19_45386634_C_T       chr19_45386634_C_T -0.3196944 0.01885000</span></span>
 <span><span class="co">#&gt; chr19_45387034_A_C       chr19_45387034_A_C  0.6303681 0.03097778</span></span></code></pre></div>
-<p>NOTE: For any of the methods “…withJAM”, SNP names must not contain
-“:”, which is a requirement of the original JAM algorithm. If SNP names
-are in the form “19:45301088_T_C” change to “chr19_45301088_T_C”. This
-could be done using the command</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">paste0</span>(<span class="st">"chr"</span>, <span class="fu">gsub</span>(<span class="st">":"</span>, <span class="st">"_"</span>, snpnames)</span></code></pre></div>
 <div class="section level3">
 <h3 id="mgflashfm-and-mgfm">MGflashfm and MGfm<a class="anchor" aria-label="anchor" href="#mgflashfm-and-mgfm"></a>
 </h3>
@@ -277,7 +287,7 @@ needed to run this, gwas.list, corX.list, covY.list, Nall, are also
 provided in this library.</p>
 <p>In order to use JAM for single-trait fine-mapping, the R2BGLiMS
 library must be loaded, in addition to MGflashfm.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">R2BGLiMS</span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">MGflashfm</span><span class="op">)</span></span>
 <span><span class="co">#' Example code for how to construct gwas.list, corX.list, covY.list, Nall from Group data. These final objects are available in this package.</span></span>
@@ -285,60 +295,52 @@ library must be loaded, in addition to MGflashfm.</p>
 <span><span class="co">#' corX.list &lt;- list(corXg1,corXg2)</span></span>
 <span><span class="co">#' covY.list &lt;-list(covYg1,covYg2)</span></span>
 <span><span class="co">#' Nall &lt;- list(Ng1,Ng2)</span></span>
-<span><span class="va">save.path</span> <span class="op">&lt;-</span> <span class="st">"Example/tmpDIR"</span></span>
+<span><span class="va">save.path</span> <span class="op">&lt;-</span> <span class="st">"tmpDIR"</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="va">save.path</span><span class="op">)</span> </span>
 <span><span class="co">#' NB If a directory is not provided in save.path, the function cannot run to completion.</span></span>
 <span><span class="co">#' Set NCORES=no. of groups, if on non-Windows machine. If on Windows, set NCORES=1.</span></span>
 <span><span class="co">#' Set multi=TRUE for multi-trait and multi=FALSE for single-trait</span></span>
 <span><span class="co">#' Set flashfmRET=TRUE to return flashfm results for each group (these may then be used as input for other functions); FALSE otherwise </span></span>
-<span><span class="va">mgmtCS</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/MGFLASHFMwithJAM.html">MGFLASHFMwithJAM</a></span><span class="op">(</span><span class="va">gwas.list</span>, LD.list<span class="op">=</span><span class="va">corX.list</span>, <span class="va">covY.list</span>, <span class="va">Nall</span>, multi<span class="op">=</span><span class="cn">TRUE</span>, TOdds<span class="op">=</span><span class="fl">1</span>, maxcv<span class="op">=</span><span class="fl">1</span>, maxcv_stop <span class="op">=</span> <span class="fl">20</span>, maxcv_autocheck <span class="op">=</span> <span class="cn">TRUE</span>, </span>
-<span>    <span class="va">save.path</span>, cpp<span class="op">=</span><span class="fl">0.99</span>, cred<span class="op">=</span><span class="fl">0.99</span>,NCORES<span class="op">=</span><span class="fl">2</span>,jam.nM.iter<span class="op">=</span><span class="fl">1</span>,flashfmRET<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span> </span></code></pre></div>
+<span><span class="va">mgmtCS</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/MGFLASHFMwithJAM.html">MGFLASHFMwithJAM</a></span><span class="op">(</span><span class="va">gwas.list</span>, LD.list<span class="op">=</span><span class="va">corX.list</span>, <span class="va">covY.list</span>, <span class="va">Nall</span>, multi<span class="op">=</span><span class="cn">TRUE</span>, TOdds<span class="op">=</span><span class="fl">1</span>, maxcv<span class="op">=</span><span class="fl">1</span>, </span>
+<span>    maxcv_stop <span class="op">=</span> <span class="fl">20</span>, <span class="va">save.path</span>, cpp<span class="op">=</span><span class="fl">0.99</span>, cred<span class="op">=</span><span class="fl">0.99</span>,NCORES<span class="op">=</span><span class="fl">2</span>,jam.nM.iter<span class="op">=</span><span class="fl">1</span>,flashfmRET<span class="op">=</span><span class="cn">TRUE</span>, extra.java.arguments<span class="op">=</span><span class="cn">NULL</span><span class="op">)</span> </span></code></pre></div>
 <p>More specifically, the above arguments are:</p>
-<ul>
-<li><p>gwas.list: List of GWAS results for each trait in each group;
-gwas.list[[ i ]][[ j ]] is the results for Trait j in Group i and has 3
-columns named: rsID, beta, EAF; if trait names are provided, these trait
-names are given in output; if group names are provided, these group
-names are given in the output.</p></li>
-<li><p>LD.list: List of SNP correlation matrices for each group, groups
-must be in same order as in gwas.list; LD.list[[ i ]] is the SNP
-correlation matrix for group i and must have snp names in row.names and
-col.names.</p></li>
-<li><p>covY.list: List of A trait covariance matrices for each Group, in
-same order as gwas.list; trait columns should be in same order as traits
-are listed in gwas.list[[ i ]].</p></li>
-<li><p>Nall: List of components with same length as number of Studies:
-Nall[[ i ]] is the M-vector of trait sample sizes for group i, where M
-is the number of traits.</p></li>
-<li><p>multi: TRUE for multi-group multi-trait fine-mapping; FALSE for
-multi-group single-trait fine-mapping; default TRUE.</p></li>
-<li><p>TOdds: TOdds=1 is the default for flashfm which gives a 50/50
-odds that the traits share at least one causal variant.</p></li>
-<li><p>maxcv: starting value for maximum number of causal
-variants.</p></li>
-<li><p>maxcv_stop: maximum value to consider for maximum number of
-causal variants.</p></li>
-<li><p>maxcv_autocheck: Logical for whether to incrementally increase
-maxcv (TRUE); if do not want to increment maxcv set this to
-FALSE.</p></li>
-<li><p>save.path: Path to save JAM output files; tmp files and could
-delete these later
-e.g. save.path=paste0(DIRout,“/tmpJAM/region1”).</p></li>
-<li><p>cpp: cumulative posterior probability threshold for selecting top
-models; default 0.99.</p></li>
-<li><p>cred: Level for multi-group credible set, default 0.99 for 99%
-credible sets.</p></li>
-<li><p>NCORES: number of cores for parallel computing; recommend
-NCORES=max(A,M), but if on Windows, use NCORES=1.</p></li>
-<li><p>jam.nM.iter: in millions, number of iterations to use in JAM;
-defailt 1 (i.e.: 1 million).</p></li>
-<li><p>flashfmRET: TRUE to return single-group flashfm output; default
-FALSE.</p></li>
-</ul>
+<pre><code>- gwas.list: List of GWAS results for each trait in each group; gwas.list[[ i ]][[ j ]] is the results for Trait j in Group i and has 3 columns named: rsID, beta, EAF; 
+if trait names are provided, these trait names are given in output;
+if group  names are provided, these group  names are given in the output.
+
+- LD.list: List of SNP correlation matrices for each group, groups must be in same order as in gwas.list; 
+LD.list[[ i ]] is the SNP correlation matrix for group  i and must have snp names in row.names and col.names.
+
+-  covY.list: List of A trait covariance matrices for each Group, in same order as gwas.list; trait columns should be in same order as traits are listed in gwas.list[[ i ]].
+
+-  Nall: List of components with same length as number of Studies: Nall[[ i ]] is the M-vector of trait sample sizes for group  i, where M is the number of traits.
+
+-  multi: TRUE for multi-group  multi-trait fine-mapping; FALSE for multi-group  single-trait fine-mapping; default TRUE.
+
+-  TOdds: TOdds=1 is the default for flashfm which gives a 50/50 odds that the traits share at least one causal variant.
+
+-  maxcv: starting value for maximum number of causal variants.
+
+-  maxcv_stop: maximum value to consider for maximum number of causal variants (maxcv_stop &gt;= maxcv).
+
+-  save.path: Path to save JAM output files; tmp files and could delete these later e.g. save.path=paste0(DIRout,"/tmpJAM/region1").
+
+-  cpp: cumulative posterior probability threshold for selecting top models; default 0.99.
+
+-  cred: Level for multi-group  credible set, default 0.99 for 99% credible sets.
+
+-  NCORES: number of cores for parallel computing; recommend NCORES=max(A,M), 
+but if on Windows, use NCORES=1.
+
+-  jam.nM.iter: in millions, number of iterations to use in JAM; defailt 1 (i.e.: 1 million).
+
+-  flashfmRET: TRUE to return single-group  flashfm output; default FALSE.
+
+- extra.java.arguments:  default NULL; A character string to be passed through to the java command line. E.g. to specify a different temporary directory by passing "-Djava.io.tmpdir=/Temp".</code></pre>
 <p>Look at the resulting 99% credible sets (CS99) and the causal
 variants to see that the causal variants are contained in the CS99 and
 have mgMPP &gt; 0.9:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span> <span class="va">mgmtCS</span><span class="op">$</span><span class="va">CSsummary</span></span>
 <span><span class="co">#&gt; $AD</span></span>
 <span><span class="co">#&gt;                          mgMPP maf_pooled prop_groups        groups</span></span>
@@ -394,7 +396,7 @@ list(flashfmG1,flashfmG2), where flashfmG1 is the output for Group 1 and
 flashfmG2 is the output for Group 2; up to 6 groups may be
 included.</li>
 </ol>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">#' Set multi=TRUE for multi-trait and multi=FALSE for single-trait</span></span>
 <span><span class="co">#' If using non-Windows machine, can set NCORES=2 for speed </span></span>
 <span><span class="co">#' an example of flashfm output is available at mgmtCS$flashfm.out</span></span>
@@ -407,14 +409,14 @@ returned in the object mgmtCS$flashm.out, where mgmtCS$flashm.out[[i]]
 is the set of flashfm results for Group i. These flashfm results may be
 used as input to MGflashfmRET.</li>
 </ol>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">#' Set multi=TRUE for multi-trait and multi=FALSE for single-trait</span></span>
 <span><span class="co">#' If using Windows machine, set NCORES=1 </span></span>
 <span><span class="va">mgCS</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/MGflashfmRET.html">MGflashfmRET</a></span><span class="op">(</span><span class="va">gwas.list</span>,flashfm.list<span class="op">=</span><span class="va">mgmtCS</span><span class="op">$</span><span class="va">flashfm.out</span>,<span class="va">Nall</span>,cred<span class="op">=</span><span class="fl">0.99</span>,multi<span class="op">=</span><span class="cn">FALSE</span>,cpp<span class="op">=</span><span class="fl">0.99</span>,NCORES<span class="op">=</span><span class="fl">2</span><span class="op">)</span> </span></code></pre></div>
 <p>Look at the resulting 99% credible sets (CS99) and the causal
 variants to see that the causal variants are contained in the CS99 and
 have mgMPP &gt; 0.8:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span> <span class="va">mgCS</span><span class="op">$</span><span class="va">CSsummary</span></span>
 <span><span class="co">#&gt; $AD</span></span>
 <span><span class="co">#&gt;                         mgMPP maf_pooled prop_studies        groups</span></span>
@@ -448,13 +450,14 @@ have mgMPP &gt; 0.8:</p>
 <div class="section level4">
 <h4 id="mgfm-single-trait-fine-mapping-has-not-been-run-on-each-group">MGfm: Single-trait fine-mapping has not been run on each group<a class="anchor" aria-label="anchor" href="#mgfm-single-trait-fine-mapping-has-not-been-run-on-each-group"></a>
 </h4>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">R2BGLiMS</span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">MGflashfm</span><span class="op">)</span></span>
 <span><span class="va">T1gwas.list</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">gwas.list</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>, <span class="va">gwas.list</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="va">N1all</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">sapply</a></span><span class="op">(</span><span class="va">Nall</span>,<span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="va">x</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="co"># Set NCORES=no. of groups, if on non-Windows machine. If on Windows, set NCORES=1.</span></span>
-<span><span class="va">mgCS1</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/MGFMwithJAM.html">MGFMwithJAM</a></span><span class="op">(</span><span class="va">T1gwas.list</span>, <span class="va">corX.list</span>,  <span class="va">N1all</span>, <span class="va">save.path</span>,cpp<span class="op">=</span><span class="fl">0.99</span>,cred<span class="op">=</span><span class="fl">0.99</span>, maxcv<span class="op">=</span><span class="fl">1</span>, maxcv_stop <span class="op">=</span> <span class="fl">20</span>, maxcv_autocheck <span class="op">=</span> <span class="cn">TRUE</span>,NCORES<span class="op">=</span><span class="fl">2</span>,jam.nM.iter<span class="op">=</span><span class="fl">1</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">mgCS1</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/MGFMwithJAM.html">MGFMwithJAM</a></span><span class="op">(</span><span class="va">T1gwas.list</span>, <span class="va">corX.list</span>,  <span class="va">N1all</span>, <span class="va">save.path</span>, cpp<span class="op">=</span><span class="fl">0.99</span>, cred<span class="op">=</span><span class="fl">0.99</span>, maxcv<span class="op">=</span><span class="fl">1</span>, maxcv_stop <span class="op">=</span> <span class="fl">20</span>, </span>
+<span>    NCORES<span class="op">=</span><span class="fl">2</span>, jam.nM.iter<span class="op">=</span><span class="fl">1</span>, extra.java.arguments<span class="op">=</span><span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
 <p>The output from mgCS1 is identical to the Trait 1 results in mgCS, as
 these are multi-group single-trait fine-mapping results, so we do not
 save them separately. The difference between running MGFLASHFMwithJAM
@@ -477,7 +480,7 @@ mgCS$CSdetail$details[[1]].</p>
 the format of the object g2t1CS, where models are given as row names in
 a data.frame of model PP. Variants within models are separated by
 “%”.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">g2t1CS</span><span class="op">$</span><span class="va">PP</span><span class="op">)</span></span>
 <span><span class="co">#&gt;                                                                  PP</span></span>
 <span><span class="co">#&gt; chr19_45387034_A_C%chr19_45425175_T_G%chr19_45418251_G_A 0.14388732</span></span>
@@ -487,13 +490,10 @@ a data.frame of model PP. Variants within models are separated by
 <span><span class="co">#&gt; chr19_45436247_T_C%chr19_45387034_A_C%chr19_45425175_T_G 0.06123857</span></span>
 <span><span class="co">#&gt; chr19_45436247_T_C%chr19_45387057_A_G%chr19_45425175_T_G 0.06123857</span></span></code></pre></div>
 <p>Then, the following command may be used, where</p>
-<ul>
-<li><p>g1PP is the single-trait results for Group 1 and g2PP is for
-Group 2</p></li>
-<li><p>gwas.list[[ i ]][[ j ]] is the data.frame of GWAS results for
-Group i, Trait j</p></li>
-</ul>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<pre><code>- g1PP is the single-trait results for Group 1 and g2PP is for Group 2
+
+- gwas.list[[ i ]][[ j ]] is the data.frame of GWAS results for Group i, Trait j</code></pre>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">#' stfm.list = list(g1PP,g2PP)</span></span>
 <span><span class="co">#' isnps = Reduce(union,list(gwas.list[[1]][[1]]$rsID,gwas.list[[2]][[1]]$rsID)) #' up to 6 groups </span></span>
 <span><span class="co">#' N = c(N1,N2)</span></span>
@@ -518,12 +518,13 @@ group</li>
 <p>This example applies JAMdynamic to Trait 1 in Group 2, so it requires
 the Group 2 SNP correlation matrix and the Group 2 Trait 1 GWAS data and
 sample size. The output from below is provided in the object g2t1CS.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">R2BGLiMS</span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">MGflashfm</span><span class="op">)</span></span>
-<span><span class="va">g2t1CS</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/JAMdynamic.html">JAMdynamic</a></span><span class="op">(</span>gwas<span class="op">=</span><span class="va">gwas.list</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>,corX<span class="op">=</span><span class="va">corX.list</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span>, ybar<span class="op">=</span><span class="fl">0</span>, Vy<span class="op">=</span><span class="fl">1</span>, N<span class="op">=</span><span class="va">Nall</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, cred<span class="op">=</span><span class="fl">.99</span>, save.path<span class="op">=</span><span class="va">save.path</span>, maxcv<span class="op">=</span><span class="fl">1</span>, maxcv_stop <span class="op">=</span> <span class="fl">20</span>, maxcv_autocheck <span class="op">=</span> <span class="cn">TRUE</span>,jam.nM.iter<span class="op">=</span><span class="fl">1</span><span class="op">)</span></span>
+<span><span class="va">g2t1CS</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/JAMdynamic.html">JAMdynamic</a></span><span class="op">(</span>gwas<span class="op">=</span><span class="va">gwas.list</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>,corX<span class="op">=</span><span class="va">corX.list</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span>, ybar<span class="op">=</span><span class="fl">0</span>, Vy<span class="op">=</span><span class="fl">1</span>, N<span class="op">=</span><span class="va">Nall</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, cred<span class="op">=</span><span class="fl">.99</span>, save.path<span class="op">=</span><span class="st">"tmpDIR"</span>, </span>
+<span>    maxcv<span class="op">=</span><span class="fl">1</span>, maxcv_stop <span class="op">=</span> <span class="fl">20</span>, jam.nM.iter<span class="op">=</span><span class="fl">1</span>, extra.java.arguments<span class="op">=</span><span class="cn">NULL</span><span class="op">)</span></span>
 <span><span class="co">#' equivalent to below, by making use of default values</span></span>
-<span><span class="va">g2t1CS</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/JAMdynamic.html">JAMdynamic</a></span><span class="op">(</span>gwas<span class="op">=</span><span class="va">gwas.list</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>,corX<span class="op">=</span><span class="va">corX.list</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span>, N<span class="op">=</span><span class="va">Nall</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, save.path<span class="op">=</span><span class="va">save.path</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">g2t1CS</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/JAMdynamic.html">JAMdynamic</a></span><span class="op">(</span>gwas<span class="op">=</span><span class="va">gwas.list</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>,corX<span class="op">=</span><span class="va">corX.list</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span>, N<span class="op">=</span><span class="va">Nall</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, save.path<span class="op">=</span><span class="st">"tmpDIR"</span><span class="op">)</span></span></code></pre></div>
 <p>The arguments above are as follows:</p>
 <pre><code>- gwas:  GWAS data frame for the single Trait in a single Group.
 
@@ -539,13 +540,13 @@ sample size. The output from below is provided in the object g2t1CS.</p>
 
 - maxcv = 1 is the start value for the maximum number of causal variants.
 
-- maxcv_stop = 20 is the absolute maximum number of causal variants (iterate from maxcv to at most maxcv_stop).
+- maxcv_stop = 20 is the absolute maximum number of causal variants (iterate from maxcv to at most maxcv_stop); maxcv_stop &gt;= maxcv.
 
-- maxcv_autocheck = TRUE indicates that the maximum number of casual variants is dynamic and will be between maxcv and maxcv_stop; if FALSE, there is no iteration and the maximum number of causal variants is maxcv.
+- jam.nM.iter: the number of iterations (in millions) for JAM, the default is 1 (i.e.: 1 Million)
 
-- jam.nM.iter: the number of iterations (in millions) for JAM, the default is 1 (i.e.: 1 Million)</code></pre>
+- extra.java.arguments:  default NULL; A character string to be passed through to the java command line. E.g. to specify a different temporary directory by passing "-Djava.io.tmpdir=/Temp".</code></pre>
 <p>The CS99 for Group 2 Trait 1 is below:</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">g2t1CS</span><span class="op">$</span><span class="va">CS</span> </span>
 <span><span class="co">#&gt; chr19_45425175_T_G chr19_45387034_A_C chr19_45387057_A_G chr19_45418251_G_A </span></span>
 <span><span class="co">#&gt;         1.00000000         0.50113519         0.49886481         0.28777464 </span></span>
@@ -575,26 +576,27 @@ to the two traits in Group 2. It requires:</p>
 
 - cpp=0.99 is the default for flashfm which prioritises single-trait fine-mapping models with cumulative posterior probability 0.99.
 
-- NCORES is set to the number of traits to allow parallel processing in flashfm, though if on a Windows machine use NCORES=1.
+- NCORES is set to the number of traits to allow parallel processing in flashfm, 
+though if on a Windows machine use NCORES=1.
 
 - maxcv = 1 is the start value for the maximum number of causal variants.
 
-- maxcv_stop = 20 is the absolute maximum number of causal variants (iterate from maxcv to at most maxcv_stop).
+- maxcv_stop = 20 is the absolute maximum number of causal variants (iterate from maxcv to at most maxcv_stop); maxcv_stop &gt;= maxcv.
 
-- maxcv_autocheck = TRUE indicates that the maximum number of casual variants is dynamic and will be between maxcv and maxcv_stop; if FALSE, there is no iteration and the maximum number of causal variants is maxcv.
+- jam.nM.iter: the number of iterations (in millions) for JAM, the default is 1 (i.e.: 1 Million)
 
-- jam.nM.iter: the number of iterations (in millions) for JAM, the default is 1 (i.e.: 1 Million)</code></pre>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+- extra.java.arguments:  default NULL; A character string to be passed through to the java command line. E.g. to specify a different temporary directory by passing "-Djava.io.tmpdir=/Temp".</code></pre>
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">R2BGLiMS</span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">MGflashfm</span><span class="op">)</span></span>
 <span><span class="co"># Set NCORES=no. of traits, if on non-Windows machine. If on Windows, set NCORES=1.</span></span>
 <span><span class="co">#' Group 1 multi-trait fine-mapping with flashfm</span></span>
-<span><span class="va">mtg1</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/FLASHFMwithJAMd.html">FLASHFMwithJAMd</a></span><span class="op">(</span><span class="va">gwas.list</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>, <span class="va">corX.list</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>, ybar<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>,<span class="fl">0</span><span class="op">)</span>, <span class="va">Nall</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>, <span class="va">save.path</span>, TOdds <span class="op">=</span> <span class="fl">1</span>, <span class="va">covY.list</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>, </span>
-<span>    cpp <span class="op">=</span> <span class="fl">0.99</span>, NCORES<span class="op">=</span><span class="fl">2</span>, maxcv<span class="op">=</span><span class="fl">1</span>, maxcv_stop <span class="op">=</span> <span class="fl">20</span>, maxcv_autocheck <span class="op">=</span> <span class="cn">TRUE</span>,jam.nM.iter<span class="op">=</span><span class="fl">1</span><span class="op">)</span>  </span>
+<span><span class="va">mtg1</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/FLASHFMwithJAMd.html">FLASHFMwithJAMd</a></span><span class="op">(</span><span class="va">gwas.list</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>, <span class="va">corX.list</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>, ybar<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>,<span class="fl">0</span><span class="op">)</span>, <span class="va">Nall</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>, <span class="va">save.path</span>, TOdds <span class="op">=</span> <span class="fl">1</span>, </span>
+<span>    <span class="va">covY.list</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>, cpp <span class="op">=</span> <span class="fl">0.99</span>, NCORES<span class="op">=</span><span class="fl">2</span>, maxcv<span class="op">=</span><span class="fl">1</span>, maxcv_stop <span class="op">=</span> <span class="fl">20</span>,jam.nM.iter<span class="op">=</span><span class="fl">1</span>, extra.java.arguments<span class="op">=</span><span class="cn">NULL</span><span class="op">)</span>  </span>
 <span><span class="va">mtg1CS</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/allcredsetsPP.html">allcredsetsPP</a></span><span class="op">(</span><span class="va">mtg1</span><span class="op">$</span><span class="va">mpp.pp</span>,cred<span class="op">=</span><span class="fl">.99</span><span class="op">)</span>      </span>
 <span><span class="co">#' Group 2 multi-trait fine-mapping with flashfm</span></span>
-<span><span class="va">mtg2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/FLASHFMwithJAMd.html">FLASHFMwithJAMd</a></span><span class="op">(</span><span class="va">gwas.list</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span>, <span class="va">corX.list</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span>, ybar<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>,<span class="fl">0</span><span class="op">)</span>, <span class="va">Nall</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span>, <span class="va">save.path</span>, TOdds <span class="op">=</span> <span class="fl">1</span>, <span class="va">covY.list</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span>, </span>
-<span>    cpp <span class="op">=</span> <span class="fl">0.99</span>, NCORES<span class="op">=</span><span class="fl">2</span>, maxcv<span class="op">=</span><span class="fl">1</span>, maxcv_stop <span class="op">=</span> <span class="fl">20</span>, maxcv_autocheck <span class="op">=</span> <span class="cn">TRUE</span>,jam.nM.iter<span class="op">=</span><span class="fl">1</span><span class="op">)</span>  </span>
+<span><span class="va">mtg2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/FLASHFMwithJAMd.html">FLASHFMwithJAMd</a></span><span class="op">(</span><span class="va">gwas.list</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span>, <span class="va">corX.list</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span>, ybar<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>,<span class="fl">0</span><span class="op">)</span>, <span class="va">Nall</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span>, <span class="va">save.path</span>, TOdds <span class="op">=</span> <span class="fl">1</span>, </span>
+<span>    <span class="va">covY.list</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span>, cpp <span class="op">=</span> <span class="fl">0.99</span>, NCORES<span class="op">=</span><span class="fl">2</span>, maxcv<span class="op">=</span><span class="fl">1</span>, maxcv_stop <span class="op">=</span> <span class="fl">20</span>,jam.nM.iter<span class="op">=</span><span class="fl">1</span>, extra.java.arguments<span class="op">=</span><span class="cn">NULL</span><span class="op">)</span>  </span>
 <span><span class="va">mtg2CS</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/allcredsetsPP.html">allcredsetsPP</a></span><span class="op">(</span><span class="va">mtg2</span><span class="op">$</span><span class="va">mpp.pp</span>,cred<span class="op">=</span><span class="fl">.99</span><span class="op">)</span>      </span></code></pre></div>
 <p>The flashfm output is available in mgmtCS$flashfm.out, for Trait i
 (i=1,2), mgmtCS$flashfm.out[[i]]$mpp.pp, and the resulting SNP groups
@@ -607,7 +609,7 @@ mgmtCS$flashfm.out[[2]]$snpGroups.</p>
 each trait, using single-trait fine-mapping ($fm) and flashfm ($flashfm)
 results. Here, we construct flashfm CS99 using the pre-saved flashfm
 output in mgmtCS.</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">#' Trait 1</span></span>
 <span><span class="va">mtg1</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/vector.html" class="external-link">vector</a></span><span class="op">(</span><span class="st">"list"</span>,<span class="fl">2</span><span class="op">)</span></span>
 <span><span class="va">mtg1</span><span class="op">$</span><span class="va">mpp.pp</span> <span class="op">=</span> <span class="va">mgmtCS</span><span class="op">$</span><span class="va">flashfm.out</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">mpp.pp</span></span>
@@ -639,7 +641,7 @@ output in mgmtCS.</p>
 <span><span class="co">#&gt; chr19_45427353_C_G chr19_45427353_C_G 1.0000000</span></span>
 <span><span class="co">#&gt; chr19_45387034_A_C chr19_45387034_A_C 0.8814133</span></span>
 <span><span class="co">#&gt; chr19_45387057_A_G chr19_45387057_A_G 0.1185867</span></span></code></pre></div>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">#' Trait 2</span></span>
 <span><span class="va">mtg2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/vector.html" class="external-link">vector</a></span><span class="op">(</span><span class="st">"list"</span>,<span class="fl">2</span><span class="op">)</span></span>
 <span><span class="va">mtg2</span><span class="op">$</span><span class="va">mpp.pp</span> <span class="op">=</span> <span class="va">mgmtCS</span><span class="op">$</span><span class="va">flashfm.out</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">mpp.pp</span></span>

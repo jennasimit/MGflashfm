@@ -56,13 +56,13 @@
 <span>  TOdds <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  maxcv <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  maxcv_stop <span class="op">=</span> <span class="fl">20</span>,</span>
-<span>  maxcv_autocheck <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  <span class="va">save.path</span>,</span>
 <span>  cpp <span class="op">=</span> <span class="fl">0.99</span>,</span>
 <span>  cred <span class="op">=</span> <span class="fl">0.99</span>,</span>
 <span>  NCORES <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  jam.nM.iter <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  flashfmRET <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  flashfmRET <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  extra.java.arguments <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -100,11 +100,7 @@ if group  names are provided for the A data.frames, these group  names are given
 
 
 <dt>maxcv_stop</dt>
-<dd><p>maximum value to consider for maximum number of causal variants</p></dd>
-
-
-<dt>maxcv_autocheck</dt>
-<dd><p>Logical for whether to incrementally increase maxcv (TRUE); if do not want to increment maxcv set this to FALSE</p></dd>
+<dd><p>maximum value to consider for maximum number of causal variants; maxcv_stop &gt;= maxcv.</p></dd>
 
 
 <dt>save.path</dt>
@@ -129,6 +125,11 @@ if group  names are provided for the A data.frames, these group  names are given
 
 <dt>flashfmRET</dt>
 <dd><p>TRUE to return single-group  flashfm output; default FALSE</p></dd>
+
+
+<dt>extra.java.arguments</dt>
+<dd><p>A character string to be passed through to the java command line. E.g. to specify a
+different temporary directory by passing "-Djava.io.tmpdir=/Temp".</p></dd>
 
 </dl></div>
     <div id="value">

@@ -10,22 +10,25 @@
 #' @param multi TRUE for multi-group  multi-trait fine-mapping; FALSE for multi-group  single-trait fine-mapping; default TRUE
 #' @param TOdds target odds of no sharing to sharing; default is 1
 #' @param maxcv starting value for maximum number of causal variants
-#' @param maxcv_stop maximum value to consider for maximum number of causal variants
-#' @param maxcv_autocheck Logical for whether to incrementally increase maxcv (TRUE); if do not want to increment maxcv set this to FALSE
+#' @param maxcv_stop maximum value to consider for maximum number of causal variants; maxcv_stop >= maxcv.
 #' @param save.path Path to save JAM output files; tmp files and could delete these later e.g. save.path=paste0(DIRout,"/tmpJAM/region1").
 #' @param cpp cumulative posterior probability threshold for selecting top models; default 0.99
 #' @param cred Level for multi-group  credible set, default 0.99 for 99% credible sets
 #' @param NCORES number of cores for parallel computing; recommend NCORES=max(A,M), but if on Windows, use NCORES=1
 #' @param jam.nM.iter in millions, number of iterations to use in JAM; defailt 1 (1 million)
 #' @param flashfmRET TRUE to return single-group  flashfm output; default FALSE 
+#' @param extra.java.arguments A character string to be passed through to the java command line. E.g. to specify a
+#' different temporary directory by passing "-Djava.io.tmpdir=/Temp".
 #' @return List consisting of two objects: CSsummary = List of one data.frame for each trait; each trait data.frame gives the variants in the multi-group  credible set for the trait, the msMPP, pooled MAF, proportion of studies 
 #' that contain the variant, names of studies that contain the variant
 #' CSdetail = \[\[1\]\] a list of multi-group  credible sets (variants and their msMPP), one for each trait; \[\[2\]\] details = for each trait, list of all multi-group  models and variants and their msPP, msMPP
 #' if flashfmRET=TRUE, also returns a list of flashfm output for each group  
 #' @export
+#' @import R2BGLiMS
 #' @author Jenn Asimit
-MGFLASHFMwithJAM <- function(gwas.list, LD.list, covY.list, Nall, multi=TRUE, TOdds=1, maxcv=1, maxcv_stop = 20, maxcv_autocheck = TRUE, save.path, cpp=0.99, cred=0.99,NCORES=1,jam.nM.iter=1,flashfmRET=FALSE) {
+MGFLASHFMwithJAM <- function(gwas.list, LD.list, covY.list, Nall, multi=TRUE, TOdds=1, maxcv=1, maxcv_stop = 20, save.path, cpp=0.99, cred=0.99,NCORES=1,jam.nM.iter=1,flashfmRET=FALSE,extra.java.arguments=NULL) {
   
+  maxcv_autocheck = TRUE
   S <- length(gwas.list)
   M <- length(gwas.list[[1]])
   
@@ -47,7 +50,7 @@ MGFLASHFMwithJAM <- function(gwas.list, LD.list, covY.list, Nall, multi=TRUE, TO
   flashfm.out <- ssnps <- allflashfmPP <- vector("list",S)
   for(i in 1:S) {
    flashfm.out[[i]] <- FLASHFMwithJAMd(gwas.list[[i]], LD.list[[i]], ybar, Nall[[i]], save.path=save.path, TOdds = TOdds, covY=covY.list[[i]], 
-                        cpp = cpp, NCORES=NCORES, maxcv=maxcv, maxcv_stop = maxcv_stop, maxcv_autocheck = maxcv_autocheck,jam.nM.iter=jam.nM.iter)
+                        cpp = cpp, NCORES=NCORES, maxcv=maxcv, maxcv_stop = maxcv_stop,jam.nM.iter=jam.nM.iter,extra.java.arguments=extra.java.arguments)
 	ssnps[[i]] <- Reduce(intersect,lapply(gwas.list[[i]],function(x) x$rsID))
 	allflashfmPP[[i]] <- flashfm.out[[i]]$mpp.pp
   }

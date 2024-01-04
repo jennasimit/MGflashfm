@@ -15,8 +15,8 @@ JAMdynamic(
   save.path,
   maxcv = 1,
   maxcv_stop = 20,
-  maxcv_autocheck = TRUE,
-  jam.nM.iter = 1
+  jam.nM.iter = 1,
+  extra.java.arguments = NULL
 )
 }
 \arguments{
@@ -36,11 +36,12 @@ JAMdynamic(
 
 \item{maxcv}{starting value for maximum number of causal variants}
 
-\item{maxcv_stop}{maximum value to consider for maximum number of causal variants}
-
-\item{maxcv_autocheck}{Logical for whether to incrementally increase maxcv (TRUE); if do not want to increment maxcv set this to FALSE}
+\item{maxcv_stop}{maximum value to consider for maximum number of causal variants; maxcv_stop >= maxcv.}
 
 \item{jam.nM.iter}{in millions, number of iterations to use in JAM; defailt 1 (1 million)}
+
+\item{extra.java.arguments}{A character string to be passed through to the java command line. E.g. to specify a
+different temporary directory by passing "-Djava.io.tmpdir=/Temp".}
 }
 \value{
 List of credible set variants with their MPP, MPP for all variants, PP for all models

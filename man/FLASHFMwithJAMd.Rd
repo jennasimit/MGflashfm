@@ -16,8 +16,8 @@ FLASHFMwithJAMd(
   NCORES,
   maxcv = 1,
   maxcv_stop = 20,
-  maxcv_autocheck = TRUE,
-  jam.nM.iter = 1
+  jam.nM.iter = 1,
+  extra.java.arguments = NULL
 )
 }
 \arguments{
@@ -41,11 +41,12 @@ FLASHFMwithJAMd(
 
 \item{maxcv}{starting value for maximum number of causal variants; default 1}
 
-\item{maxcv_stop}{maximum value to consider for maximum number of causal variants}
-
-\item{maxcv_autocheck}{Logical for whether to incrementally increase maxcv (TRUE); if do not want to increment maxcv set this to FALSE}
+\item{maxcv_stop}{maximum value to consider for maximum number of causal variants; maxcv_stop >= maxcv.}
 
 \item{jam.nM.iter}{in millions, number of iterations to use in JAM; defailt 1 (1 million)}
+
+\item{extra.java.arguments}{A character string to be passed through to the java command line. E.g. to specify a
+different temporary directory by passing "-Djava.io.tmpdir=/Temp".}
 }
 \value{
 list with 2 components: mpp.pp, a list with 4 components giving the SNP-level results (mpp.pp$PP,mpp.pp$MPP) and SNP group level results (mpp.pp$MPPg, mpp.pp$PPg); and snpGroups,

@@ -122,17 +122,21 @@ return(list(summary=sg,details=list(mgMPP=tampp,mgPP=tapp),cred=cred))
 #' @param cpp cumulative posterior probability threshold for selecting top models; default 0.99
 #' @param cred Level for credible set, default 0.99 
 #' @param maxcv starting value for maximum number of causal variants
-#' @param maxcv_stop maximum value to consider for maximum number of causal variants
-#' @param maxcv_autocheck Logical for whether to incrementally increase maxcv (TRUE); if do not want to increment maxcv set this to FALSE
+#' @param maxcv_stop maximum value to consider for maximum number of causal variants; maxcv_stop >= maxcv
 #' @param NCORES number of cores for parallel computing; recommend NCORES=A, but if on Windows, use NCORES=1
 #' @param jam.nM.iter in millions, number of iterations to use in JAM; defailt 1 (1 million)
+#' @param extra.java.arguments A character string to be passed through to the java command line. E.g. to specify a
+#' different temporary directory by passing "-Djava.io.tmpdir=/Temp".
 #' @return List consisting of two objects: CSsummary = List of one data.frame for each trait; each trait data.frame gives the variants in the multi-group  credible set for the trait, the mgMPP, pooled MAF, proportion of studies 
 #' that contain the variant, names of studies that contain the variant
 #' CSdetail = \[\[1\]\] a list of multi-group  credible sets (variants and their mgMPP), one for each trait; \[\[2\]\] details = for each trait, list of all multi-group  models and variants and their mgPP, mgMPP
 #' @author Jenn Asimit
+#' @import R2BGLiMS
 #' @export
-MGFMwithJAM <- function(gwas.list, corX.list,  Nall, save.path,cpp=0.99,cred=0.99, maxcv=1, maxcv_stop = 20, maxcv_autocheck = TRUE,NCORES=1,jam.nM.iter=1) {
+MGFMwithJAM <- function(gwas.list, corX.list,  Nall, save.path,cpp=0.99,cred=0.99, maxcv=1, maxcv_stop = 20,NCORES=1,jam.nM.iter=1,extra.java.arguments=NULL) {
 
+
+maxcv_autocheck = TRUE
 A <- length(gwas.list)
 beta.list <- lapply(gwas.list,function(x) {b <- x[,"beta"]; names(b) <- x[,"rsID"]; b})
 raf.list <- lapply(gwas.list,function(x) {b <- x[,"EAF"]; names(b) <- x[,"rsID"]; b})
@@ -155,11 +159,11 @@ for(i in 1:A) {
  ivec[[i]] <- i
  dir.create(paste0(save.path,"/a",i))
 } 
-jamfn <- function(i,beta.list,corX.list,raf.list,ybar,Vy,Nall,save.path,maxcv,maxcv_stop,maxcv_autocheck) {
+jamfn <- function(i,beta.list,corX.list,raf.list,ybar,Vy,Nall,save.path,maxcv,maxcv_stop,maxcv_autocheck,extra.java.arguments) {
  JAMcor.tries.maxcv(beta.list[[i]], corX.list[[i]], raf.list[[i]], ybar=0, Vy=1, 
-  Nall[i], paste0(save.path,"/a",i), maxcv=maxcv, maxcv_stop = maxcv_stop, maxcv_autocheck = maxcv_autocheck,jam.nM.iter=jam.nM.iter)}
+  Nall[i], paste0(save.path,"/a",i), maxcv=maxcv, maxcv_stop = maxcv_stop, maxcv_autocheck = maxcv_autocheck,jam.nM.iter=jam.nM.iter,extra.java.arguments=extra.java.arguments)}
 
-stfm <- parallel::mclapply(ivec,jamfn,beta.list,corX.list,raf.list,ybar=0, Vy=1,Nall,save.path, mc.cores =NCORES,maxcv,maxcv_stop,maxcv_autocheck)	
+stfm <- parallel::mclapply(ivec,jamfn,beta.list,corX.list,raf.list,ybar=0, Vy=1,Nall,save.path, mc.cores =NCORES,maxcv,maxcv_stop,maxcv_autocheck,extra.java.arguments)	
 
 for(i in 1:A) unlink(paste0(save.path,"/a",i,"/*"))
 

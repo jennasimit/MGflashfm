@@ -13,9 +13,9 @@ MGFMwithJAM(
   cred = 0.99,
   maxcv = 1,
   maxcv_stop = 20,
-  maxcv_autocheck = TRUE,
   NCORES = 1,
-  jam.nM.iter = 1
+  jam.nM.iter = 1,
+  extra.java.arguments = NULL
 )
 }
 \arguments{
@@ -33,13 +33,14 @@ MGFMwithJAM(
 
 \item{maxcv}{starting value for maximum number of causal variants}
 
-\item{maxcv_stop}{maximum value to consider for maximum number of causal variants}
-
-\item{maxcv_autocheck}{Logical for whether to incrementally increase maxcv (TRUE); if do not want to increment maxcv set this to FALSE}
+\item{maxcv_stop}{maximum value to consider for maximum number of causal variants; maxcv_stop >= maxcv}
 
 \item{NCORES}{number of cores for parallel computing; recommend NCORES=A, but if on Windows, use NCORES=1}
 
 \item{jam.nM.iter}{in millions, number of iterations to use in JAM; defailt 1 (1 million)}
+
+\item{extra.java.arguments}{A character string to be passed through to the java command line. E.g. to specify a
+different temporary directory by passing "-Djava.io.tmpdir=/Temp".}
 }
 \value{
 List consisting of two objects: CSsummary = List of one data.frame for each trait; each trait data.frame gives the variants in the multi-group  credible set for the trait, the mgMPP, pooled MAF, proportion of studies

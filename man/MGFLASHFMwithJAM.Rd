@@ -13,13 +13,13 @@ MGFLASHFMwithJAM(
   TOdds = 1,
   maxcv = 1,
   maxcv_stop = 20,
-  maxcv_autocheck = TRUE,
   save.path,
   cpp = 0.99,
   cred = 0.99,
   NCORES = 1,
   jam.nM.iter = 1,
-  flashfmRET = FALSE
+  flashfmRET = FALSE,
+  extra.java.arguments = NULL
 )
 }
 \arguments{
@@ -40,9 +40,7 @@ if group  names are provided for the A data.frames, these group  names are given
 
 \item{maxcv}{starting value for maximum number of causal variants}
 
-\item{maxcv_stop}{maximum value to consider for maximum number of causal variants}
-
-\item{maxcv_autocheck}{Logical for whether to incrementally increase maxcv (TRUE); if do not want to increment maxcv set this to FALSE}
+\item{maxcv_stop}{maximum value to consider for maximum number of causal variants; maxcv_stop >= maxcv.}
 
 \item{save.path}{Path to save JAM output files; tmp files and could delete these later e.g. save.path=paste0(DIRout,"/tmpJAM/region1").}
 
@@ -55,6 +53,9 @@ if group  names are provided for the A data.frames, these group  names are given
 \item{jam.nM.iter}{in millions, number of iterations to use in JAM; defailt 1 (1 million)}
 
 \item{flashfmRET}{TRUE to return single-group  flashfm output; default FALSE}
+
+\item{extra.java.arguments}{A character string to be passed through to the java command line. E.g. to specify a
+different temporary directory by passing "-Djava.io.tmpdir=/Temp".}
 }
 \value{
 List consisting of two objects: CSsummary = List of one data.frame for each trait; each trait data.frame gives the variants in the multi-group  credible set for the trait, the msMPP, pooled MAF, proportion of studies

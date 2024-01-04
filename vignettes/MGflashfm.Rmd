@@ -46,6 +46,21 @@ where raf is the reference (effect) allele frequency vector, seB is the vector o
 of SNPs in raf, and Vy is the trait variance, which is 1 by default, assuming traits are transformed to normal(0,1). 
 
 
+**Notes for using JAMdynamic and any of the methods "...withJAM"**: 
+
+1. SNP names must not contain ":", which is a requirement of the original JAM algorithm.
+If SNP names are in the form "19:45301088_T_C" change to "chr19_45301088_T_C". 
+This could be done using the command 
+```{r,eval=FALSE}
+paste0("chr", gsub(":", "_", snpnames)
+```
+2. The R2BGLiMS library must be loaded together with MGflashfm:
+```{r,eval=FALSE}
+library(R2BGLiMS)
+library(MGflashfm)
+```
+
+
 This vignette introduces MGflashfm, MGfm, and JAMdynamic and gives illustrations of their use 
 on simulated data of two traits with a shared causal variant, that is the same in two groups. A simulated data set is provided in this MGflashfm R package.
 
@@ -137,12 +152,6 @@ Nall
 lapply(gwas.list[[1]],head)
 ```
 
-NOTE: For any of the methods "...withJAM", SNP names must not contain ":", which is a requirement of the original JAM algorithm.
-If SNP names are in the form "19:45301088_T_C" change to "chr19_45301088_T_C". 
-This could be done using the command 
-```{r,eval=FALSE}
-paste0("chr", gsub(":", "_", snpnames)
-```
 
 
 ## MGflashfm and MGfm
@@ -166,51 +175,51 @@ library(MGflashfm)
 #' corX.list <- list(corXg1,corXg2)
 #' covY.list <-list(covYg1,covYg2)
 #' Nall <- list(Ng1,Ng2)
-save.path <- "Example/tmpDIR"
+save.path <- "tmpDIR"
 dir.create(save.path) 
 #' NB If a directory is not provided in save.path, the function cannot run to completion.
 #' Set NCORES=no. of groups, if on non-Windows machine. If on Windows, set NCORES=1.
 #' Set multi=TRUE for multi-trait and multi=FALSE for single-trait
 #' Set flashfmRET=TRUE to return flashfm results for each group (these may then be used as input for other functions); FALSE otherwise 
-mgmtCS <- MGFLASHFMwithJAM(gwas.list, LD.list=corX.list, covY.list, Nall, multi=TRUE, TOdds=1, maxcv=1, maxcv_stop = 20, maxcv_autocheck = TRUE, 
-	save.path, cpp=0.99, cred=0.99,NCORES=2,jam.nM.iter=1,flashfmRET=TRUE) 
+mgmtCS <- MGFLASHFMwithJAM(gwas.list, LD.list=corX.list, covY.list, Nall, multi=TRUE, TOdds=1, maxcv=1, 
+	maxcv_stop = 20, save.path, cpp=0.99, cred=0.99,NCORES=2,jam.nM.iter=1,flashfmRET=TRUE, extra.java.arguments=NULL) 
 ``` 
 
 More specifically, the above arguments are:
 
- - gwas.list: List of GWAS results for each trait in each group; gwas.list[[\ i\ ]][[\ j\ ]] is the results for Trait j in Group i and has 
-  3 columns named: rsID, beta, EAF; 
-if trait names are provided, these trait names are given in output;
-if group  names are provided, these group  names are given in the output.
+	- gwas.list: List of GWAS results for each trait in each group; gwas.list[[ i ]][[ j ]] is the results for Trait j in Group i and has 3 columns named: rsID, beta, EAF; 
+	if trait names are provided, these trait names are given in output;
+	if group  names are provided, these group  names are given in the output.
 
-- LD.list: List of SNP correlation matrices for each group, groups must be in same order as in gwas.list; 
-LD.list[[\ i\ ]] is the SNP correlation matrix for group  i and must have snp names in row.names and col.names.
+	- LD.list: List of SNP correlation matrices for each group, groups must be in same order as in gwas.list; 
+	LD.list[[ i ]] is the SNP correlation matrix for group  i and must have snp names in row.names and col.names.
 
--  covY.list: List of A trait covariance matrices for each Group, in same order as gwas.list; trait columns should be in same order as traits are listed in gwas.list[[\ i\ ]].
+	-  covY.list: List of A trait covariance matrices for each Group, in same order as gwas.list; trait columns should be in same order as traits are listed in gwas.list[[ i ]].
 
--  Nall: List of components with same length as number of Studies: Nall[[\ i\ ]] is the M-vector of trait sample sizes for group  i, where M is the number of traits.
+	-  Nall: List of components with same length as number of Studies: Nall[[ i ]] is the M-vector of trait sample sizes for group  i, where M is the number of traits.
 
--  multi: TRUE for multi-group  multi-trait fine-mapping; FALSE for multi-group  single-trait fine-mapping; default TRUE.
+	-  multi: TRUE for multi-group  multi-trait fine-mapping; FALSE for multi-group  single-trait fine-mapping; default TRUE.
 
--  TOdds: TOdds=1 is the default for flashfm which gives a 50/50 odds that the traits share at least one causal variant.
+	-  TOdds: TOdds=1 is the default for flashfm which gives a 50/50 odds that the traits share at least one causal variant.
 
--  maxcv: starting value for maximum number of causal variants.
+	-  maxcv: starting value for maximum number of causal variants.
 
--  maxcv_stop: maximum value to consider for maximum number of causal variants.
+	-  maxcv_stop: maximum value to consider for maximum number of causal variants (maxcv_stop >= maxcv).
 
--  maxcv_autocheck: Logical for whether to incrementally increase maxcv (TRUE); if do not want to increment maxcv set this to FALSE.
+	-  save.path: Path to save JAM output files; tmp files and could delete these later e.g. save.path=paste0(DIRout,"/tmpJAM/region1").
 
--  save.path: Path to save JAM output files; tmp files and could delete these later e.g. save.path=paste0(DIRout,"/tmpJAM/region1").
+	-  cpp: cumulative posterior probability threshold for selecting top models; default 0.99.
 
--  cpp: cumulative posterior probability threshold for selecting top models; default 0.99.
+	-  cred: Level for multi-group  credible set, default 0.99 for 99% credible sets.
 
--  cred: Level for multi-group  credible set, default 0.99 for 99% credible sets.
+	-  NCORES: number of cores for parallel computing; recommend NCORES=max(A,M), 
+	but if on Windows, use NCORES=1.
 
--  NCORES: number of cores for parallel computing; recommend NCORES=max(A,M), but if on Windows, use NCORES=1.
+	-  jam.nM.iter: in millions, number of iterations to use in JAM; defailt 1 (i.e.: 1 million).
 
--  jam.nM.iter: in millions, number of iterations to use in JAM; defailt 1 (i.e.: 1 million).
+	-  flashfmRET: TRUE to return single-group  flashfm output; default FALSE.
 
--  flashfmRET: TRUE to return single-group  flashfm output; default FALSE.
+	- extra.java.arguments:  default NULL; A character string to be passed through to the java command line. E.g. to specify a different temporary directory by passing "-Djava.io.tmpdir=/Temp".
 
 
 Look at the resulting 99% credible sets (CS99) and the causal variants to see that the causal variants are contained in the CS99 and have mgMPP > 0.9:
@@ -276,7 +285,8 @@ library(MGflashfm)
 T1gwas.list <- list(gwas.list[[1]][[1]], gwas.list[[2]][[1]])
 N1all <- sapply(Nall,function(x) x[1])
 # Set NCORES=no. of groups, if on non-Windows machine. If on Windows, set NCORES=1.
-mgCS1 <- MGFMwithJAM(T1gwas.list, corX.list,  N1all, save.path,cpp=0.99,cred=0.99, maxcv=1, maxcv_stop = 20, maxcv_autocheck = TRUE,NCORES=2,jam.nM.iter=1)
+mgCS1 <- MGFMwithJAM(T1gwas.list, corX.list,  N1all, save.path, cpp=0.99, cred=0.99, maxcv=1, maxcv_stop = 20, 
+	NCORES=2, jam.nM.iter=1, extra.java.arguments=NULL)
 ``` 
 
 The output from mgCS1 is identical to the Trait 1 results in mgCS, as these are multi-group single-trait fine-mapping results, so we do not save them separately. 
@@ -300,9 +310,9 @@ head(g2t1CS$PP)
 ```
 Then, the following command may be used, where 
 
- - g1PP is the single-trait results for Group 1 and g2PP is for Group 2
+	- g1PP is the single-trait results for Group 1 and g2PP is for Group 2
 
- - gwas.list[[\ i\ ]][[\ j\ ]] is the data.frame of GWAS results for Group i, Trait j
+	- gwas.list[[ i ]][[ j ]] is the data.frame of GWAS results for Group i, Trait j
  
 ```{r,eval=FALSE}
 #' stfm.list = list(g1PP,g2PP)
@@ -329,9 +339,10 @@ The output from below is provided in the object g2t1CS.
 ```{r,eval=FALSE} 
 library(R2BGLiMS)
 library(MGflashfm)
-g2t1CS <- JAMdynamic(gwas=gwas.list[[2]][[1]],corX=corX.list[[2]], ybar=0, Vy=1, N=Nall[[2]][1], cred=.99, save.path=save.path, maxcv=1, maxcv_stop = 20, maxcv_autocheck = TRUE,jam.nM.iter=1)
+g2t1CS <- JAMdynamic(gwas=gwas.list[[2]][[1]],corX=corX.list[[2]], ybar=0, Vy=1, N=Nall[[2]][1], cred=.99, save.path="tmpDIR", 
+	maxcv=1, maxcv_stop = 20, jam.nM.iter=1, extra.java.arguments=NULL)
 #' equivalent to below, by making use of default values
-g2t1CS <- JAMdynamic(gwas=gwas.list[[2]][[1]],corX=corX.list[[2]], N=Nall[[2]][1], save.path=save.path)
+g2t1CS <- JAMdynamic(gwas=gwas.list[[2]][[1]],corX=corX.list[[2]], N=Nall[[2]][1], save.path="tmpDIR")
 ``` 
 
 The arguments above are as follows:
@@ -350,11 +361,12 @@ The arguments above are as follows:
 
 	- maxcv = 1 is the start value for the maximum number of causal variants.
 
-	- maxcv_stop = 20 is the absolute maximum number of causal variants (iterate from maxcv to at most maxcv_stop).
-
-	- maxcv_autocheck = TRUE indicates that the maximum number of casual variants is dynamic and will be between maxcv and maxcv_stop; if FALSE, there is no iteration and the maximum number of causal variants is maxcv.
+	- maxcv_stop = 20 is the absolute maximum number of causal variants (iterate from maxcv to at most maxcv_stop); maxcv_stop >= maxcv.
 
 	- jam.nM.iter: the number of iterations (in millions) for JAM, the default is 1 (i.e.: 1 Million)
+	
+	- extra.java.arguments:  default NULL; A character string to be passed through to the java command line. E.g. to specify a different temporary directory by passing "-Djava.io.tmpdir=/Temp".
+
 
 The CS99 for Group 2 Trait 1 is below:
 
@@ -383,15 +395,17 @@ It requires:
 	
 	- cpp=0.99 is the default for flashfm which prioritises single-trait fine-mapping models with cumulative posterior probability 0.99.
 
-	- NCORES is set to the number of traits to allow parallel processing in flashfm, though if on a Windows machine use NCORES=1.
+	- NCORES is set to the number of traits to allow parallel processing in flashfm, 
+	though if on a Windows machine use NCORES=1.
 
 	- maxcv = 1 is the start value for the maximum number of causal variants.
 
-	- maxcv_stop = 20 is the absolute maximum number of causal variants (iterate from maxcv to at most maxcv_stop).
-
-	- maxcv_autocheck = TRUE indicates that the maximum number of casual variants is dynamic and will be between maxcv and maxcv_stop; if FALSE, there is no iteration and the maximum number of causal variants is maxcv.
+	- maxcv_stop = 20 is the absolute maximum number of causal variants (iterate from maxcv to at most maxcv_stop); maxcv_stop >= maxcv.
 
 	- jam.nM.iter: the number of iterations (in millions) for JAM, the default is 1 (i.e.: 1 Million)
+	
+	- extra.java.arguments:  default NULL; A character string to be passed through to the java command line. E.g. to specify a different temporary directory by passing "-Djava.io.tmpdir=/Temp".
+
 
 
 ```{r,eval=FALSE} 
@@ -399,12 +413,12 @@ library(R2BGLiMS)
 library(MGflashfm)
 # Set NCORES=no. of traits, if on non-Windows machine. If on Windows, set NCORES=1.
 #' Group 1 multi-trait fine-mapping with flashfm
-mtg1 <- FLASHFMwithJAMd(gwas.list[[1]], corX.list[[1]], ybar=c(0,0), Nall[[1]], save.path, TOdds = 1, covY.list[[1]], 
-    cpp = 0.99, NCORES=2, maxcv=1, maxcv_stop = 20, maxcv_autocheck = TRUE,jam.nM.iter=1)  
+mtg1 <- FLASHFMwithJAMd(gwas.list[[1]], corX.list[[1]], ybar=c(0,0), Nall[[1]], save.path, TOdds = 1, 
+	covY.list[[1]], cpp = 0.99, NCORES=2, maxcv=1, maxcv_stop = 20,jam.nM.iter=1, extra.java.arguments=NULL)  
 mtg1CS <- allcredsetsPP(mtg1$mpp.pp,cred=.99)      
 #' Group 2 multi-trait fine-mapping with flashfm
-mtg2 <- FLASHFMwithJAMd(gwas.list[[2]], corX.list[[2]], ybar=c(0,0), Nall[[2]], save.path, TOdds = 1, covY.list[[2]], 
-    cpp = 0.99, NCORES=2, maxcv=1, maxcv_stop = 20, maxcv_autocheck = TRUE,jam.nM.iter=1)  
+mtg2 <- FLASHFMwithJAMd(gwas.list[[2]], corX.list[[2]], ybar=c(0,0), Nall[[2]], save.path, TOdds = 1, 
+	covY.list[[2]], cpp = 0.99, NCORES=2, maxcv=1, maxcv_stop = 20,jam.nM.iter=1, extra.java.arguments=NULL)  
 mtg2CS <- allcredsetsPP(mtg2$mpp.pp,cred=.99)      
 ``` 
 
