@@ -1,11 +1,9 @@
-cor.refdata2 <- flashfm:::cor.refdata2
 mod.fn <- flashfm:::mod.fn
 tagexpand.mod <- flashfm:::tagexpand.mod
 multibeta <- flashfm:::multibeta
 Sxy.hat <- flashfm:::Sxy.hat
 calcABF <- flashfm:::calcABF
 makesnpmod <- flashfm:::makesnpmod
-tagSNP <- flashfm:::tagSNP
 makestr <- flashfm:::makestr
 marg.snps <- flashfm:::marg.snps
 calckappa <- flashfm:::calckappa

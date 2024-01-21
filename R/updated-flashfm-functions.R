@@ -1,3 +1,61 @@
+cor.refdata2 <- function (corX, r2 = 0.99) {
+    gmat2t <- tagSNP(corX, threshold = sqrt(r2))
+    gt <- unlist(gmat2t)
+    tg = gt[names(gt) == "tagsnp"]
+    refG <- corX[tg, tg]
+    return(list(refG = refG, taglist = gmat2t))
+}
+
+# edited version of tagSNP in hscovar package
+# here all snps in the bin have abs(r)<threshold
+tagSNP <- function (mat, threshold = 0.8) 
+{
+    if (max(abs(mat), na.rm = T) > 1 + 1e-06) 
+        stop("Correlation or R-squared matrix is expected.")
+    mat <- apply(mat, 1, function(x) {
+        x[!is.finite(x)] <- 0
+        return(x)
+    })
+    diag(mat) <- 1
+    if ((threshold >= 1) | (threshold <= 0)) 
+        stop("Threshold out of range")
+    p <- nrow(mat)
+    bin <- list()
+    counter <- 0
+    snpset <- 1:p
+    coln <- colnames(mat)
+    colnames(mat) <- NULL
+    snps <- NULL
+    repeat {
+        counter <- counter + 1
+        ls <- lapply(snpset, function(i) {
+            id <- abs(mat[i, snpset]) > threshold
+            snpset[id]
+        })
+        m <- which.max(lapply(ls, length))
+        if (length(ls[[m]]) == 1) {
+            ts <- ls[[m]]
+            candidate <- 1
+        } else {
+            candidate <- apply(mat[ls[[m]], ls[[m]]], 1, function(x) {
+                all(abs(x) > threshold)
+            })
+            ts <- ls[[m]][candidate][ceiling(sum(candidate)/2)]
+        }
+        snps <- c(snps,ls[[m]][candidate])
+        bin[[counter]] <- list(snps = coln[ls[[m]]][candidate], tagsnp = coln[ts])
+        snpset <- setdiff(snpset, snps)
+        if ((!length(snpset) > 0) || (counter == p)) 
+            break
+    }
+    z <- length(unlist(rlist::list.select(bin, tp = snps)))
+    message(paste(z, "SNPs have been grouped into", counter, 
+        "bins"))
+    return(bin)
+}
+
+
+
 
 best.models.cpp <- function (d, cpp.thr = 0.99, maxmod = NULL) {
 	old.cpp = cpp.thr
@@ -101,9 +159,8 @@ credsetU <- function (modPP, cred = 0.99)
     tmp <- modPP[order(modPP, decreasing = TRUE)]
     cpp <- cumsum(tmp)
     wh <- which(cpp <= cred)
-    if (!length(wh)) 
-        wh <- 1
-    wh <- c(wh, max(wh) + 1)
+    if (!length(wh)) wh <- 1
+    if(cpp[max(wh)] < cred) wh <- c(wh, max(wh) + 1)
     keepmodPP <- tmp[wh]
     mods <- names(keepmodPP)
     cs <- unique(unlist(strsplit(mods, "%")))

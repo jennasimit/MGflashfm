@@ -467,7 +467,7 @@ TA2flashfm1 <- function(PPn,nsnpspermodel,nsnps,cred=0.99) {
  cpp <- cumsum(tmp)
  wh <- which(cpp <= cred)
  if (!length(wh)) wh <- 1
- wh <- c(wh, max(wh) + 1)
+ if(cpp[max(wh)] < cred) wh <- c(wh, max(wh) + 1)
  keepmodPP <- tmp[wh]
  mods <- names(keepmodPP)
  cs <- unique(unlist(strsplit(mods,"%")))
@@ -725,7 +725,7 @@ TA3flashfm1 <- function(PPn,nsnpspermodel,SS,nsnps,snps,cred=0.99) {
  cpp <- cumsum(tmp)
  wh <- which(cpp <= cred)
  if (!length(wh)) wh <- 1
- wh <- c(wh, max(wh) + 1)
+ if(cpp[max(wh)] < cred) wh <- c(wh, max(wh) + 1)
  mods <- ntmp[wh]
  cs <- unique(unlist(strsplit(mods,"%")))
  

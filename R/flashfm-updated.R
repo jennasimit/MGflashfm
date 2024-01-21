@@ -409,7 +409,7 @@ JAMdynamic <- function(gwas, corX, ybar=0, Vy=1, N, cred=.99, save.path, maxcv=1
  cpp <- cumsum(pp)
  wh <- which(cpp <= cred)
  if (!length(wh)) wh <- 1
- wh <- c(wh, max(wh) + 1)
+ if(cpp[max(wh)] < cred) wh <- c(wh, max(wh) + 1)
  mods <- mod[wh]
  cs <- unique(unlist(strsplit(mods, "%")))
  cs <- cs[!is.na(cs)]

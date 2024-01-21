@@ -758,7 +758,7 @@ have <- which(sapply(all.list,function(x) !is.null(x)))
  cpp <- cumsum(tmp)
  wh <- which(cpp <= cred)
  if (!length(wh)) wh <- 1
- wh <- c(wh, max(wh) + 1)
+ if(cpp[max(wh)] < cred) wh <- c(wh, max(wh) + 1)
  mods <- ntmp[wh]
 
  cs <- unique(unlist(strsplit(mods,"%")))
