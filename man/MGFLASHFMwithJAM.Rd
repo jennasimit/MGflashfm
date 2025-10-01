@@ -17,7 +17,8 @@ MGFLASHFMwithJAM(
   cpp = 0.99,
   cred = 0.99,
   NCORES = 1,
-  jam.nM.iter = 1,
+  jam.nM.iter = 5,
+  r2 = 0.8,
   flashfmRET = FALSE,
   extra.java.arguments = NULL
 )
@@ -50,7 +51,9 @@ if group  names are provided for the A data.frames, these group  names are given
 
 \item{NCORES}{number of cores for parallel computing; recommend NCORES=max(A,M), but if on Windows, use NCORES=1}
 
-\item{jam.nM.iter}{in millions, number of iterations to use in JAM; defailt 1 (1 million)}
+\item{jam.nM.iter}{in millions, number of iterations to use in JAM; defailt 5 (5 million)}
+
+\item{r2}{r.squared threshold for thinning SNPs before JAM and finding tag SNPs;}
 
 \item{flashfmRET}{TRUE to return single-group  flashfm output; default FALSE}
 

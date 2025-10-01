@@ -15,7 +15,8 @@
 #' @param cpp cumulative posterior probability threshold for selecting top models; default 0.99
 #' @param cred Level for multi-group  credible set, default 0.99 for 99% credible sets
 #' @param NCORES number of cores for parallel computing; recommend NCORES=max(A,M), but if on Windows, use NCORES=1
-#' @param jam.nM.iter in millions, number of iterations to use in JAM; defailt 1 (1 million)
+#' @param jam.nM.iter in millions, number of iterations to use in JAM; defailt 5 (5 million)
+#' @param r2 r.squared threshold for thinning SNPs before JAM and finding tag SNPs; 
 #' @param flashfmRET TRUE to return single-group  flashfm output; default FALSE 
 #' @param extra.java.arguments A character string to be passed through to the java command line. E.g. to specify a
 #' different temporary directory by passing "-Djava.io.tmpdir=/Temp".
@@ -26,7 +27,7 @@
 #' @export
 #' @import R2BGLiMS
 #' @author Jenn Asimit
-MGFLASHFMwithJAM <- function(gwas.list, LD.list, covY.list, Nall, multi=TRUE, TOdds=1, maxcv=1, maxcv_stop = 20, save.path, cpp=0.99, cred=0.99,NCORES=1,jam.nM.iter=1,flashfmRET=FALSE,extra.java.arguments=NULL) {
+MGFLASHFMwithJAM <- function(gwas.list, LD.list, covY.list, Nall, multi=TRUE, TOdds=1, maxcv=1, maxcv_stop = 20, save.path, cpp=0.99, cred=0.99,NCORES=1,jam.nM.iter=5,r2=0.80,flashfmRET=FALSE,extra.java.arguments=NULL) {
   
   maxcv_autocheck = TRUE
   S <- length(gwas.list)
@@ -50,7 +51,7 @@ MGFLASHFMwithJAM <- function(gwas.list, LD.list, covY.list, Nall, multi=TRUE, TO
   flashfm.out <- ssnps <- allflashfmPP <- vector("list",S)
   for(i in 1:S) {
    flashfm.out[[i]] <- FLASHFMwithJAMd(gwas.list[[i]], LD.list[[i]], ybar, Nall[[i]], save.path=save.path, TOdds = TOdds, covY=covY.list[[i]], 
-                        cpp = cpp, NCORES=NCORES, maxcv=maxcv, maxcv_stop = maxcv_stop,jam.nM.iter=jam.nM.iter,extra.java.arguments=extra.java.arguments)
+                        cpp = cpp, NCORES=NCORES, maxcv=maxcv, maxcv_stop = maxcv_stop,jam.nM.iter=jam.nM.iter,r2=r2,extra.java.arguments=extra.java.arguments)
 	ssnps[[i]] <- Reduce(intersect,lapply(gwas.list[[i]],function(x) x$rsID))
 	allflashfmPP[[i]] <- flashfm.out[[i]]$mpp.pp
   }

@@ -1,3 +1,44 @@
+cor.refdata2_mod <- function(corX, beta, MAF = NULL, r2 = 0.99) {
+  # corX: precomputed correlation matrix (SNP x SNP)
+  # beta: named vector of effect sizes for SNPs
+  # MAF: optional named vector of minor allele frequencies
+  # r2: r-squared threshold for tagging
+  
+  # call original tagSNP function
+  gmat2t <- tagSNP(corX, threshold = sqrt(r2))
+  
+  # update tag SNP based on |beta| and optional MAF
+  for (i in seq_along(gmat2t)) {
+    snps_in_bin <- gmat2t[[i]]$snps
+    if (length(snps_in_bin) > 1) {
+      # pick SNP(s) with largest |beta|
+      abs_beta <- abs(beta[snps_in_bin])
+      tag_candidates <- snps_in_bin[abs_beta == max(abs_beta)]
+      
+      # tie-break with smallest MAF if available
+      if (!is.null(MAF) && length(tag_candidates) > 1) {
+        tag_idx <- tag_candidates[which.min(MAF[tag_candidates])]
+      } else {
+        tag_idx <- tag_candidates[1]
+      }
+      
+      gmat2t[[i]]$tagsnp <- tag_idx
+    } else {
+      gmat2t[[i]]$tagsnp <- snps_in_bin
+    }
+  }
+  
+  # extract tag SNPs
+  tg <- unlist(gmat2t)
+  tg <- tg[names(tg) == "tagsnp"]
+  
+  # create reference correlation matrix for tag SNPs
+  refG <- corX[tg, tg, drop = FALSE]
+  
+  return(list(refG = refG, taglist = gmat2t))
+}
+###
+
 #' @title Approximate effective sample size from GWAS of related samples (copied from flashfm)
 #' @param raf vector of reference (or minor) allele frequencies for all SNPs in the GWAS
 #' @param seB vector of standard errors of SNP effect estimates, in same order as SNPs in raf
@@ -204,7 +245,13 @@ JAMmulti2 <- function (gwas.list, corX, ybar, Vy, N, r2 = 0.99, save.path, maxcv
     corX <- corX[snps, snps]    
     nsnps <- length(snps)
     corX <- as.matrix(corX)	
-    reftags <- cor.refdata2(corX, r2)
+    
+    maf_vec <- raf1[[1]] * (raf1[[1]] <= 0.5) + (1 - raf1[[1]]) * (raf1[[1]] > 0.5)
+    beta_vec <- do.call(pmax, lapply(beta1, abs)) # find largest in magnitude beta across traits
+     names(beta_vec) <- names(beta1[[1]])
+     names(maf_vec) <- names(raf1[[1]])
+#    reftags <- cor.refdata2(corX, r2)
+	reftags <- cor.refdata2_mod(corX, beta=beta_vec, MAF=maf_vec, r2 = r2)
     refGt <- as.matrix(reftags$refG)
     taglist <- reftags$taglist
 
@@ -322,7 +369,8 @@ JAMmulti.tries <- function (gwas.list, corX, ybar, Vy, N, save.path,maxcv=2,maxc
 #' @param maxcv starting value for maximum number of causal variants; default 1
 #' @param maxcv_stop maximum value to consider for maximum number of causal variants; maxcv_stop >= maxcv.
 #' @param NCORES number of cores for parallel computing; recommend NCORES=A, but if on Windows, use NCORES=1
-#' @param jam.nM.iter in millions, number of iterations to use in JAM; defailt 1 (1 million)
+#' @param jam.nM.iter in millions, number of iterations to use in JAM; defailt 5 (5 million)
+#' @param r2 r.squared threshold for thinning SNPs before JAM and finding tag SNPs; 
 #' @param extra.java.arguments A character string to be passed through to the java command line. E.g. to specify a
 #' different temporary directory by passing "-Djava.io.tmpdir=/Temp".
 #' @return list with 2 components: mpp.pp, a list with 4 components giving the SNP-level results (mpp.pp$PP,mpp.pp$MPP) and SNP group level results (mpp.pp$MPPg, mpp.pp$PPg); and snpGroups, 
@@ -331,11 +379,12 @@ JAMmulti.tries <- function (gwas.list, corX, ybar, Vy, N, save.path,maxcv=2,maxc
 #' @import R2BGLiMS
 #' @export
 FLASHFMwithJAMd <- function (gwas.list, corX, ybar, N, save.path, TOdds = 1, covY, 
-    cpp = 0.99, NCORES, maxcv=1, maxcv_stop = 20,jam.nM.iter=1,extra.java.arguments=NULL) 
+    cpp = 0.99, NCORES=1, maxcv=1, maxcv_stop = 20,jam.nM.iter=5, r2=0.8, extra.java.arguments=NULL) 
 {
     maxcv_autocheck = TRUE
     M <- length(ybar)
     if(M>6 | M<2) stop("Need at least 2 and at most 6 traits.")
+    for(i in 1:M) gwas.list[[i]] <- as.data.frame(gwas.list[[i]])
     Vy <- diag(covY)
     corX <- as.matrix(corX)
     if(!dir.exists(save.path)) {
@@ -345,7 +394,7 @@ FLASHFMwithJAMd <- function (gwas.list, corX, ybar, N, save.path, TOdds = 1, cov
     tmpdir <- paste0(save.path, "/tmp",sample(1:1000,1))   
     dir.create(tmpdir) 
     main.input <- JAMmulti2(gwas.list, corX, ybar, Vy, N, 
-            r2 = 0.99, save.path,maxcv=maxcv,maxcv_stop = maxcv_stop, maxcv_autocheck = maxcv_autocheck,jam.nM.iter=jam.nM.iter,extra.java.arguments=extra.java.arguments)
+            r2 = r2, save.path,maxcv=maxcv,maxcv_stop = maxcv_stop, maxcv_autocheck = maxcv_autocheck,jam.nM.iter=jam.nM.iter,extra.java.arguments=extra.java.arguments)
     gc(verbose = FALSE)
     ss.stats <- summaryStats(Xmat = FALSE, ybar.all = ybar, main.input = main.input)
     if(M<6) {
@@ -379,20 +428,21 @@ FLASHFMwithJAMd <- function (gwas.list, corX, ybar, N, save.path, TOdds = 1, cov
 #' @param maxcv starting value for maximum number of causal variants
 #' @param maxcv_stop maximum value to consider for maximum number of causal variants; maxcv_stop >= maxcv.
 #' @param jam.nM.iter in millions, number of iterations to use in JAM; defailt 1 (1 million)
+#' @param r2 r.squared threshold for thinning SNPs before JAM and finding tag SNPs; 
 #' @param extra.java.arguments A character string to be passed through to the java command line. E.g. to specify a
 #' different temporary directory by passing "-Djava.io.tmpdir=/Temp".
 #' @return List of credible set variants with their MPP, MPP for all variants, PP for all models 
 #' @import R2BGLiMS
 #' @export
 #' @author Feng Zhou
-JAMdynamic <- function(gwas, corX, ybar=0, Vy=1, N, cred=.99, save.path, maxcv=1, maxcv_stop = 20,jam.nM.iter=1,extra.java.arguments=NULL){
+JAMdynamic <- function(gwas, corX, ybar=0, Vy=1, N, cred=.99, save.path, maxcv=1, maxcv_stop = 20,jam.nM.iter=5, r2=0.80, extra.java.arguments=NULL){
  
   maxcv_autocheck = TRUE
   if(!dir.exists(save.path)) {
      message(c("Directory ",save.path," does not exist. Creating directory ",save.path))
      dir.create(save.path)
      }
- 
+ gwas <- as.data.frame(gwas)
  beta1 <- gwas[,"beta"] 
  raf <- gwas[,"EAF"]
  names(beta1) <- names(raf) <- gwas[,"rsID"]
@@ -402,7 +452,7 @@ JAMdynamic <- function(gwas, corX, ybar=0, Vy=1, N, cred=.99, save.path, maxcv=1
  raf <- raf[ksnp]
  corX <- corX[ksnp,ksnp]
  
- fm <- JAMcor.tries.maxcv(beta1, corX, raf, ybar, Vy, N, save.path, maxcv=maxcv, maxcv_stop = maxcv_stop, maxcv_autocheck = maxcv_autocheck,jam.nM.iter=jam.nM.iter,extra.java.arguments=extra.java.arguments)
+ fm <- JAMcor.tries.maxcv(beta1, corX, raf, ybar, Vy, N, save.path, maxcv=maxcv, maxcv_stop = maxcv_stop, maxcv_autocheck = maxcv_autocheck,jam.nM.iter=jam.nM.iter, r2=r2, extra.java.arguments=extra.java.arguments)
  ind <- order(fm$PP, decreasing = TRUE)
  pp <- fm$PP[ind]
  mod <- rownames(fm)[ind]
@@ -421,7 +471,7 @@ JAMdynamic <- function(gwas, corX, ybar=0, Vy=1, N, cred=.99, save.path, maxcv=1
 
 
 
-JAMcor.tries.maxcv <- function(beta1, corX, raf, ybar, Vy, N, save.path, maxcv=1, maxcv_stop = 20, maxcv_autocheck = TRUE,jam.nM.iter=1,extra.java.arguments=NULL){
+JAMcor.tries.maxcv <- function(beta1, corX, raf, ybar, Vy, N, save.path, maxcv=1, maxcv_stop = 20, maxcv_autocheck = TRUE,jam.nM.iter=1,r2=0.99,extra.java.arguments=NULL){
   
    
   JAM_output <- NULL
@@ -431,7 +481,7 @@ JAMcor.tries.maxcv <- function(beta1, corX, raf, ybar, Vy, N, save.path, maxcv=1
     tryCatch({
       
       JAM_output <- JAMexpandedCor2(beta1, corX, raf, ybar, Vy, N, 
-            r2 = 0.99, save.path,maxcv=maxcv, maxcv_stop = maxcv_stop, maxcv_autocheck = maxcv_autocheck,jam.nM.iter=jam.nM.iter,extra.java.arguments=extra.java.arguments)
+            r2 = r2, save.path,maxcv=maxcv, maxcv_stop = maxcv_stop, maxcv_autocheck = maxcv_autocheck,jam.nM.iter=jam.nM.iter,extra.java.arguments=extra.java.arguments)
         
       maxcv_autocheck = FALSE
       print(paste0('Completed the process when ..., maxcv == ', maxcv))
@@ -568,7 +618,7 @@ JAMexpandedCor2 <- function (beta1, corX, raf, ybar, Vy, N, r2 = 0.99, save.path
     covX <- covX[snps, snps]
     maf <- raf * (raf <= 0.5) + (1 - raf) * (raf > 0.5)
     nsnps <- ncol(corX)
-    reftags <- cor.refdata2(corX, r2)
+    reftags <- cor.refdata2_mod(corX, beta=beta1[snps], MAF=maf[snps], r2 = r2)
     refGt <- reftags$refG
     taglist <- reftags$taglist
 

@@ -15,7 +15,8 @@ JAMdynamic(
   save.path,
   maxcv = 1,
   maxcv_stop = 20,
-  jam.nM.iter = 1,
+  jam.nM.iter = 5,
+  r2 = 0.8,
   extra.java.arguments = NULL
 )
 }
@@ -39,6 +40,8 @@ JAMdynamic(
 \item{maxcv_stop}{maximum value to consider for maximum number of causal variants; maxcv_stop >= maxcv.}
 
 \item{jam.nM.iter}{in millions, number of iterations to use in JAM; defailt 1 (1 million)}
+
+\item{r2}{r.squared threshold for thinning SNPs before JAM and finding tag SNPs;}
 
 \item{extra.java.arguments}{A character string to be passed through to the java command line. E.g. to specify a
 different temporary directory by passing "-Djava.io.tmpdir=/Temp".}

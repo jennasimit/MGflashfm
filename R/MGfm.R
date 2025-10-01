@@ -124,7 +124,8 @@ return(list(summary=sg,details=list(mgMPP=tampp,mgPP=tapp),cred=cred))
 #' @param maxcv starting value for maximum number of causal variants
 #' @param maxcv_stop maximum value to consider for maximum number of causal variants; maxcv_stop >= maxcv
 #' @param NCORES number of cores for parallel computing; recommend NCORES=A, but if on Windows, use NCORES=1
-#' @param jam.nM.iter in millions, number of iterations to use in JAM; defailt 1 (1 million)
+#' @param jam.nM.iter in millions, number of iterations to use in JAM; defailt 5 (5 million)
+#' @param r2 r.squared threshold for thinning SNPs before JAM and finding tag SNPs; 
 #' @param extra.java.arguments A character string to be passed through to the java command line. E.g. to specify a
 #' different temporary directory by passing "-Djava.io.tmpdir=/Temp".
 #' @return List consisting of two objects: CSsummary = List of one data.frame for each trait; each trait data.frame gives the variants in the multi-group  credible set for the trait, the mgMPP, pooled MAF, proportion of studies 
@@ -133,7 +134,7 @@ return(list(summary=sg,details=list(mgMPP=tampp,mgPP=tapp),cred=cred))
 #' @author Jenn Asimit
 #' @import R2BGLiMS
 #' @export
-MGFMwithJAM <- function(gwas.list, corX.list,  Nall, save.path,cpp=0.99,cred=0.99, maxcv=1, maxcv_stop = 20,NCORES=1,jam.nM.iter=1,extra.java.arguments=NULL) {
+MGFMwithJAM <- function(gwas.list, corX.list,  Nall, save.path,cpp=0.99,cred=0.99, maxcv=1, maxcv_stop = 20,NCORES=1,jam.nM.iter=5,r2=0.80,extra.java.arguments=NULL) {
 
 
 maxcv_autocheck = TRUE
@@ -161,7 +162,7 @@ for(i in 1:A) {
 } 
 jamfn <- function(i,beta.list,corX.list,raf.list,ybar,Vy,Nall,save.path,maxcv,maxcv_stop,maxcv_autocheck,extra.java.arguments) {
  JAMcor.tries.maxcv(beta.list[[i]], corX.list[[i]], raf.list[[i]], ybar=0, Vy=1, 
-  Nall[i], paste0(save.path,"/a",i), maxcv=maxcv, maxcv_stop = maxcv_stop, maxcv_autocheck = maxcv_autocheck,jam.nM.iter=jam.nM.iter,extra.java.arguments=extra.java.arguments)}
+  Nall[i], paste0(save.path,"/a",i), maxcv=maxcv, maxcv_stop = maxcv_stop, maxcv_autocheck = maxcv_autocheck,jam.nM.iter=jam.nM.iter,r2=r2,extra.java.arguments=extra.java.arguments)}
 
 stfm <- parallel::mclapply(ivec,jamfn,beta.list,corX.list,raf.list,ybar=0, Vy=1,Nall,save.path, mc.cores =NCORES,maxcv,maxcv_stop,maxcv_autocheck,extra.java.arguments)	
 
