@@ -53,7 +53,7 @@ if group  names are provided for the A data.frames, these group  names are given
 
 \item{jam.nM.iter}{in millions, number of iterations to use in JAM; defailt 5 (5 million)}
 
-\item{r2}{r.squared threshold for thinning SNPs before JAM and finding tag SNPs;}
+\item{r2}{r.squared threshold for to find tag SNPs to reduce model search space before expanding to all SNPs;}
 
 \item{flashfmRET}{TRUE to return single-group  flashfm output; default FALSE}
 

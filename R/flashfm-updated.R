@@ -370,7 +370,7 @@ JAMmulti.tries <- function (gwas.list, corX, ybar, Vy, N, save.path,maxcv=2,maxc
 #' @param maxcv_stop maximum value to consider for maximum number of causal variants; maxcv_stop >= maxcv.
 #' @param NCORES number of cores for parallel computing; recommend NCORES=A, but if on Windows, use NCORES=1
 #' @param jam.nM.iter in millions, number of iterations to use in JAM; defailt 5 (5 million)
-#' @param r2 r.squared threshold for thinning SNPs before JAM and finding tag SNPs; 
+#' @param r2 r.squared threshold for to find tag SNPs to reduce model search space before expanding to all SNPs; 
 #' @param extra.java.arguments A character string to be passed through to the java command line. E.g. to specify a
 #' different temporary directory by passing "-Djava.io.tmpdir=/Temp".
 #' @return list with 2 components: mpp.pp, a list with 4 components giving the SNP-level results (mpp.pp$PP,mpp.pp$MPP) and SNP group level results (mpp.pp$MPPg, mpp.pp$PPg); and snpGroups, 
@@ -428,7 +428,7 @@ FLASHFMwithJAMd <- function (gwas.list, corX, ybar, N, save.path, TOdds = 1, cov
 #' @param maxcv starting value for maximum number of causal variants
 #' @param maxcv_stop maximum value to consider for maximum number of causal variants; maxcv_stop >= maxcv.
 #' @param jam.nM.iter in millions, number of iterations to use in JAM; defailt 1 (1 million)
-#' @param r2 r.squared threshold for thinning SNPs before JAM and finding tag SNPs; 
+#' @param r2 r.squared threshold for to find tag SNPs to reduce model search space before expanding to all SNPs; 
 #' @param extra.java.arguments A character string to be passed through to the java command line. E.g. to specify a
 #' different temporary directory by passing "-Djava.io.tmpdir=/Temp".
 #' @return List of credible set variants with their MPP, MPP for all variants, PP for all models 

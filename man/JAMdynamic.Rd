@@ -41,7 +41,7 @@ JAMdynamic(
 
 \item{jam.nM.iter}{in millions, number of iterations to use in JAM; defailt 1 (1 million)}
 
-\item{r2}{r.squared threshold for thinning SNPs before JAM and finding tag SNPs;}
+\item{r2}{r.squared threshold for to find tag SNPs to reduce model search space before expanding to all SNPs;}
 
 \item{extra.java.arguments}{A character string to be passed through to the java command line. E.g. to specify a
 different temporary directory by passing "-Djava.io.tmpdir=/Temp".}

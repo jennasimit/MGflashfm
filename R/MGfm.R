@@ -125,7 +125,7 @@ return(list(summary=sg,details=list(mgMPP=tampp,mgPP=tapp),cred=cred))
 #' @param maxcv_stop maximum value to consider for maximum number of causal variants; maxcv_stop >= maxcv
 #' @param NCORES number of cores for parallel computing; recommend NCORES=A, but if on Windows, use NCORES=1
 #' @param jam.nM.iter in millions, number of iterations to use in JAM; defailt 5 (5 million)
-#' @param r2 r.squared threshold for thinning SNPs before JAM and finding tag SNPs; 
+#' @param r2 r.squared threshold for to find tag SNPs to reduce model search space before expanding to all SNPs; 
 #' @param extra.java.arguments A character string to be passed through to the java command line. E.g. to specify a
 #' different temporary directory by passing "-Djava.io.tmpdir=/Temp".
 #' @return List consisting of two objects: CSsummary = List of one data.frame for each trait; each trait data.frame gives the variants in the multi-group  credible set for the trait, the mgMPP, pooled MAF, proportion of studies 

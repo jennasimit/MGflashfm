@@ -16,7 +16,7 @@
 #' @param cred Level for multi-group  credible set, default 0.99 for 99% credible sets
 #' @param NCORES number of cores for parallel computing; recommend NCORES=max(A,M), but if on Windows, use NCORES=1
 #' @param jam.nM.iter in millions, number of iterations to use in JAM; defailt 5 (5 million)
-#' @param r2 r.squared threshold for thinning SNPs before JAM and finding tag SNPs; 
+#' @param r2 r.squared threshold for to find tag SNPs to reduce model search space before expanding to all SNPs; 
 #' @param flashfmRET TRUE to return single-group  flashfm output; default FALSE 
 #' @param extra.java.arguments A character string to be passed through to the java command line. E.g. to specify a
 #' different temporary directory by passing "-Djava.io.tmpdir=/Temp".

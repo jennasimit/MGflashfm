@@ -45,6 +45,15 @@ N  <- Neff(raf, seB, Vy = 1)
 where raf is the reference (effect) allele frequency vector, seB is the vector of standard errors of the effect estimates in the same order 
 of SNPs in raf, and Vy is the trait variance, which is 1 by default, assuming traits are transformed to normal(0,1). 
 
+**Data preparation and settings**
+
+1. Within each population group, the trait GWAS must be harmonised so that each variant has the same effect allele across the GWAS. This can be done using the harmoniseGWAS function; an example of its use is in the [flashfmZero](https://jennasimit.github.io/flashfmZero/) package, specifically [here](https://jennasimit.github.io/flashfmZero/articles/Example_Part2.html#harmonise-gwas-data-from-observed-traits).
+
+2. If using meta-analysis summary statistics, only variants that have measurements for at least 80% (for example) of the individuals should be included. This could be carried out be providing a column of sample sizes for each variant in the GWAS data provided to the harmoniseGWAS function. The minimum proportion is specified by the argument minNprop, which is 0.80 by default. If the N column is not specified or not provided, then this filtering will not be done.
+
+3. The trait GWAS must be aligned with the variants of the LD panel. This can be done using the alignGWAS function; an example of its use is in the [flashfmZero](https://jennasimit.github.io/flashfmZero/) package, specifically [here](https://jennasimit.github.io/flashfmZero/articles/Example_Part2.html#align-gwas-to-ld).
+
+4. The MGflashfm, MGfm, and flashfm fine-mapping functions that make use of JAMdynamic include a tagging argument, r2, that is 0.80 by default. This can be reduced for larger regions (e.g. r2=0.6) to increase speed. 
 
 **Notes for using JAMdynamic and any of the methods "...withJAM"**: 
 
@@ -178,11 +187,13 @@ library(MGflashfm)
 save.path <- "tmpDIR"
 dir.create(save.path) 
 #' NB If a directory is not provided in save.path, the function cannot run to completion.
-#' Set NCORES=no. of groups, if on non-Windows machine. If on Windows, set NCORES=1.
+#' Set NCORES=no. of groups, if on Linux. Otherwise, set NCORES=1.
 #' Set multi=TRUE for multi-trait and multi=FALSE for single-trait
 #' Set flashfmRET=TRUE to return flashfm results for each group (these may then be used as input for other functions); FALSE otherwise 
-mgmtCS <- MGFLASHFMwithJAM(gwas.list, LD.list=corX.list, covY.list, Nall, multi=TRUE, TOdds=1, maxcv=1, 
-	maxcv_stop = 20, save.path, cpp=0.99, cred=0.99,NCORES=2,jam.nM.iter=1,flashfmRET=TRUE, extra.java.arguments=NULL) 
+mgmtCS <- MGFLASHFMwithJAM(gwas.list=gwas.list, LD.list=corX.list, covY.list=covY.list, Nall=Nall, multi=TRUE, TOdds=1, maxcv=1, 
+	maxcv_stop = 20, save.path=save.path, cpp=0.99, cred=0.99,NCORES=1,jam.nM.iter=5,r2=.8,flashfmRET=TRUE, extra.java.arguments=NULL) 
+# which, using the default settings, is equivalent to
+mgmtCS <- MGFLASHFMwithJAM(gwas.list=gwas.list, LD.list=corX.list, covY.list=covY.list, Nall=Nall, save.path=save.path,    flashfmRET=TRUE)
 ``` 
 
 More specifically, the above arguments are:
@@ -216,6 +227,8 @@ More specifically, the above arguments are:
 	but if on Windows, use NCORES=1.
 
 	-  jam.nM.iter: in millions, number of iterations to use in JAM; defailt 1 (i.e.: 1 million).
+	
+	- r2: r.squared threshold for to find tag SNPs to reduce model search space before expanding to all SNPs;
 
 	-  flashfmRET: TRUE to return single-group  flashfm output; default FALSE.
 
@@ -255,18 +268,21 @@ where flashfmG1 is the output for Group 1 and flashfmG2 is the output for Group 
 #' If using non-Windows machine, can set NCORES=2 for speed	
 #' an example of flashfm output is available at mgmtCS$flashfm.out
 flashfm.list=mgmtCS$flashfm.out
-mgCS <- MGflashfmRET(gwas.list,flashfm.list=flashfm.list,Nall,cred=0.99,multi=FALSE,cpp=0.99,NCORES=1) 
+mgCS <- MGflashfmRET(gwas.list=gwas.list,flashfm.list=flashfm.list,Nall,cred=0.99,multi=TRUE,cpp=0.99,NCORES=1) 
+#' here multi=TRUE indicates multi-trait muti-group results are calculated
 ```
 
 2. Alternatively, if MGFLASHFMwithJAM has already been run with flashfmRET=TRUE (as above), the flashfm results from each group will be returned in the object mgmtCS\$flashm.out, 
 where mgmtCS\$flashm.out[[i]] is the set of flashfm results for Group i. These flashfm results may be used as input to MGflashfmRET. 
 ```{r}
 #' Set multi=TRUE for multi-trait and multi=FALSE for single-trait
-#' If using Windows machine, set NCORES=1 
-mgCS <- MGflashfmRET(gwas.list,flashfm.list=mgmtCS$flashfm.out,Nall,cred=0.99,multi=FALSE,cpp=0.99,NCORES=2) 
+#' If using non-Linux machine, set NCORES=1 
+mgCS <- MGflashfmRET(gwas.list=gwas.list,flashfm.list=mgmtCS$flashfm.out,Nall=Nall,cred=0.99,multi=FALSE,cpp=0.99,NCORES=1) 
+#' here multi=FALSE indicates single-trait multi-group results are calculated. This is included only for comparison purposes and 
+#' we recommend multi=TRUE for more power 
 ```
 
-Look at the resulting 99% credible sets (CS99) and the causal variants to see that the causal variants are contained in the CS99 and have mgMPP > 0.8:
+Look at the resulting 99% credible sets (CS99) from single-trait multi-ancestry fine-mapping and the causal variants to see that the causal variants are contained in the CS99 and have mgMPP > 0.8:
 
 ```{r}
  mgCS$CSsummary
@@ -279,19 +295,23 @@ cvs[-2]
 
 
 ### MGfm: Single-trait fine-mapping has not been run on each group
+This analysis is for the situation where there is one trait and multiple population groups. When multiple traits are available
+we recommend MGflashfm.
+
 ```{r,eval=FALSE} 
 library(R2BGLiMS)
 library(MGflashfm)
 T1gwas.list <- list(gwas.list[[1]][[1]], gwas.list[[2]][[1]])
 N1all <- sapply(Nall,function(x) x[1])
 # Set NCORES=no. of groups, if on non-Windows machine. If on Windows, set NCORES=1.
-mgCS1 <- MGFMwithJAM(T1gwas.list, corX.list,  N1all, save.path, cpp=0.99, cred=0.99, maxcv=1, maxcv_stop = 20, 
-	NCORES=2, jam.nM.iter=1, extra.java.arguments=NULL)
+mgCS1 <- MGFMwithJAM(gwas.list=T1gwas.list, corX.list=corX.list,  Nall=N1all, save.path=save.path, cpp=0.99, cred=0.99, maxcv=1, maxcv_stop = 20, NCORES=1, jam.nM.iter=5, r2=0.8, extra.java.arguments=NULL)
+# using defaults:
+mgCS1 <- MGFMwithJAM(gwas.list=T1gwas.list, corX.list=corX.list,  Nall=N1all, save.path=save.path)
 ``` 
 
-The output from mgCS1 is identical to the Trait 1 results in mgCS, as these are multi-group single-trait fine-mapping results, so we do not save them separately. 
-The difference between running MGFLASHFMwithJAM with multi=FALSE and MGFMwithJAM is that MGFMwithJAM is used for only a single trait, independently of the other traits, 
-while MGFLASHFMwithJAM with multi=FALSE will run MGfm on each trait using the same variants that would be used in multi-trait fine-mapping. 
+The output from mgCS1 is identical to the Trait 1 results in mgCS, as these are multi-group single-trait fine-mapping results (multi=FALSE in MGflashfm), so we do not save them separately. 
+The difference between running MGFLASHFMwithJAM with multi=FALSE and MGFMwithJAM is that MGFMwithJAM is used for only a single trait, using all variants available in the trait GWAS, 
+while MGFLASHFMwithJAM with multi=FALSE will run MGfm on each trait using the same variants that would be used in multi-trait fine-mapping (i.e. only variants present in all trait GWAS within each population group, allowing for different variants across population groups). 
 If only a single trait is of interest, then MGFMwithJAM will give multi-group fine-mapping results, independently of other traits.
  
 Here, the lines run to create mgCS give the MGfm results for Traits 1 and 2, and mgCS1 only gives the results for Trait 1.
@@ -340,7 +360,7 @@ The output from below is provided in the object g2t1CS.
 library(R2BGLiMS)
 library(MGflashfm)
 g2t1CS <- JAMdynamic(gwas=gwas.list[[2]][[1]],corX=corX.list[[2]], ybar=0, Vy=1, N=Nall[[2]][1], cred=.99, save.path="tmpDIR", 
-	maxcv=1, maxcv_stop = 20, jam.nM.iter=1, extra.java.arguments=NULL)
+	maxcv=1, maxcv_stop = 20, jam.nM.iter=5, r2=0.8, extra.java.arguments=NULL)
 #' equivalent to below, by making use of default values
 g2t1CS <- JAMdynamic(gwas=gwas.list[[2]][[1]],corX=corX.list[[2]], N=Nall[[2]][1], save.path="tmpDIR")
 ``` 
@@ -364,6 +384,8 @@ The arguments above are as follows:
 	- maxcv_stop = 20 is the absolute maximum number of causal variants (iterate from maxcv to at most maxcv_stop); maxcv_stop >= maxcv.
 
 	- jam.nM.iter: the number of iterations (in millions) for JAM, the default is 1 (i.e.: 1 Million)
+	
+	- r2: r.squared threshold for to find tag SNPs to reduce model search space before expanding to all SNPs;
 	
 	- extra.java.arguments:  default NULL; A character string to be passed through to the java command line. E.g. to specify a different temporary directory by passing "-Djava.io.tmpdir=/Temp".
 
@@ -402,7 +424,9 @@ It requires:
 
 	- maxcv_stop = 20 is the absolute maximum number of causal variants (iterate from maxcv to at most maxcv_stop); maxcv_stop >= maxcv.
 
-	- jam.nM.iter: the number of iterations (in millions) for JAM, the default is 1 (i.e.: 1 Million)
+	- jam.nM.iter: the number of iterations (in millions) for JAM, the default is 5 (i.e.: 5 Million)
+	
+	- r2: r.squared threshold for to find tag SNPs to reduce model search space before expanding to all SNPs;
 	
 	- extra.java.arguments:  default NULL; A character string to be passed through to the java command line. E.g. to specify a different temporary directory by passing "-Djava.io.tmpdir=/Temp".
 
@@ -413,12 +437,10 @@ library(R2BGLiMS)
 library(MGflashfm)
 # Set NCORES=no. of traits, if on non-Windows machine. If on Windows, set NCORES=1.
 #' Group 1 multi-trait fine-mapping with flashfm
-mtg1 <- FLASHFMwithJAMd(gwas.list[[1]], corX.list[[1]], ybar=c(0,0), Nall[[1]], save.path, TOdds = 1, 
-	covY.list[[1]], cpp = 0.99, NCORES=2, maxcv=1, maxcv_stop = 20,jam.nM.iter=1, extra.java.arguments=NULL)  
+mtg1 <- FLASHFMwithJAMd(gwas.list=gwas.list[[1]], corX=corX.list[[1]], ybar=c(0,0), N=Nall[[1]], save.path=save.path, TOdds = 1, covY=covY.list[[1]], cpp = 0.99, NCORES=1, maxcv=1, maxcv_stop = 20,jam.nM.iter=5, r2=0.8, extra.java.arguments=NULL)  
 mtg1CS <- allcredsetsPP(mtg1$mpp.pp,cred=.99)      
-#' Group 2 multi-trait fine-mapping with flashfm
-mtg2 <- FLASHFMwithJAMd(gwas.list[[2]], corX.list[[2]], ybar=c(0,0), Nall[[2]], save.path, TOdds = 1, 
-	covY.list[[2]], cpp = 0.99, NCORES=2, maxcv=1, maxcv_stop = 20,jam.nM.iter=1, extra.java.arguments=NULL)  
+#' Group 2 multi-trait fine-mapping with flashfm using default settings
+ mtg2 <- FLASHFMwithJAMd(gwas.list=gwas.list[[2]], corX=corX.list[[2]], ybar=c(0,0), N=Nall[[2]], save.path=save.path, covY=covY.list[[2]])  
 mtg2CS <- allcredsetsPP(mtg2$mpp.pp,cred=.99)      
 ``` 
 

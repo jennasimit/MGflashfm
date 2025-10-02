@@ -56,10 +56,11 @@
 <span>  TOdds <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  <span class="va">covY</span>,</span>
 <span>  cpp <span class="op">=</span> <span class="fl">0.99</span>,</span>
-<span>  <span class="va">NCORES</span>,</span>
+<span>  NCORES <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  maxcv <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  maxcv_stop <span class="op">=</span> <span class="fl">20</span>,</span>
-<span>  jam.nM.iter <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  jam.nM.iter <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>  r2 <span class="op">=</span> <span class="fl">0.8</span>,</span>
 <span>  extra.java.arguments <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -111,7 +112,11 @@
 
 
 <dt>jam.nM.iter</dt>
-<dd><p>in millions, number of iterations to use in JAM; defailt 1 (1 million)</p></dd>
+<dd><p>in millions, number of iterations to use in JAM; defailt 5 (5 million)</p></dd>
+
+
+<dt>r2</dt>
+<dd><p>r.squared threshold for to find tag SNPs to reduce model search space before expanding to all SNPs;</p></dd>
 
 
 <dt>extra.java.arguments</dt>
