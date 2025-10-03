@@ -80,7 +80,7 @@ JAM.tries.maxcv <- function(BETA,Vy,refG,mafs.ref,N,save.path,maxcv=2, maxcv_sto
     
     tryCatch({
       
-      JAM_output <-  JAMmaxcv(BETA,Vy,refG,mafs.ref,N,save.path,maxcv=maxcv,jam.nM.iter=jam.nM.iter,extra.java.arguments=extra.java.arguments) 
+      JAM_output <-  JAMmaxcv(BETA=BETA,Vy=Vy,refG=refG,mafs.ref=mafs.ref,N=N,save.path=save.path,maxcv=maxcv,jam.nM.iter=jam.nM.iter,extra.java.arguments=extra.java.arguments) 
         
       maxcv_autocheck = FALSE
       print(paste0('Completed the process when ..., maxcv == ', maxcv))
@@ -146,7 +146,7 @@ JAMmulti <- function (gwas.list, corX, ybar, Vy, N, r2 = 0.99, save.path, maxcv=
         mafs.ref <- maf[colnames(refG)]
         covX <- cor2cov(corX, sd = sqrt(2 * raf * (1 - raf)))
         covX <- covX[snps, snps]  
-		 topmods <- JAM.tries.maxcv(BETA,Vy[j],refG,mafs.ref,N[j],save.path,maxcv=maxcv, maxcv_stop = maxcv_stop, maxcv_autocheck = maxcv_autocheck,jam.nM.iter=jam.nM.iter,extra.java.arguments=extra.java.arguments)
+		 topmods <- JAM.tries.maxcv(BETA=BETA,Vy=Vy[j],refG=refG,mafs.ref=mafs.ref,N=N[j],save.path=save.path,maxcv=maxcv, maxcv_stop = maxcv_stop, maxcv_autocheck = maxcv_autocheck,jam.nM.iter=jam.nM.iter,extra.java.arguments=extra.java.arguments)
 #        jam.results <- R2BGLiMS::JAM(marginal.betas = BETA, trait.variance = Vy[j], 
 #            cor.ref = refG, mafs.ref = mafs.ref, model.space.priors = list(a = 1, 
 #                b = length(BETA), Variables = names(BETA)), max.model.dim = maxcv, 
@@ -254,7 +254,8 @@ JAMmulti2 <- function (gwas.list, corX, ybar, Vy, N, r2 = 0.99, save.path, maxcv
 	reftags <- cor.refdata2_mod(corX, beta=beta_vec, MAF=maf_vec, r2 = r2)
     refGt <- as.matrix(reftags$refG)
     taglist <- reftags$taglist
-
+	rm(reftags)
+	
  	refG <- lqmm::make.positive.definite(refGt)
  	refG <- as.matrix(refG)   
     out <- list(SM = NULL, mbeta = NULL, Nlist = Nlist)
@@ -272,7 +273,7 @@ JAMmulti2 <- function (gwas.list, corX, ybar, Vy, N, r2 = 0.99, save.path, maxcv
         mafs.ref <- maf[colnames(refG)]
         covX <- cor2cov(corX, sd = sqrt(2 * raf * (1 - raf)))
         covX <- covX[snps, snps]  
-		 topmods <- JAM.tries.maxcv(BETA,Vy[j],refG,mafs.ref,N[j],save.path,maxcv=maxcv, maxcv_stop = maxcv_stop, maxcv_autocheck = maxcv_autocheck,jam.nM.iter=jam.nM.iter,extra.java.arguments=extra.java.arguments)
+		 topmods <- JAM.tries.maxcv(BETA=BETA,Vy=Vy[j],refG=refG,mafs.ref=mafs.ref,N=N[j],save.path=save.path,maxcv=maxcv, maxcv_stop = maxcv_stop, maxcv_autocheck = maxcv_autocheck,jam.nM.iter=jam.nM.iter,extra.java.arguments=extra.java.arguments)
 #        jam.results <- R2BGLiMS::JAM(marginal.betas = BETA, trait.variance = Vy[j], 
 #            cor.ref = refG, mafs.ref = mafs.ref, model.space.priors = list(a = 1, 
 #                b = length(BETA), Variables = names(BETA)), max.model.dim = maxcv, 
@@ -348,18 +349,18 @@ JAMmulti2 <- function (gwas.list, corX, ybar, Vy, N, r2 = 0.99, save.path, maxcv
 JAMmulti.tries <- function (gwas.list, corX, ybar, Vy, N, save.path,maxcv=2,maxcv_stop =20,maxcv_autocheck =TRUE,jam.nM.iter=1,extra.java.arguments=NULL) 
 {
     tryCatch({
-        JAMmulti(gwas.list, corX, ybar, Vy, N, r2 = 0.99, 
-            save.path,maxcv=maxcv, maxcv_stop = maxcv_stop, maxcv_autocheck = maxcv_autocheck,jam.nM.iter=jam.nM.iter,extra.java.arguments=extra.java.arguments)
+        JAMmulti(gwas.list=gwas.list, corX=corX, ybar=ybar, Vy=Vy, N=N, r2 = 0.99, 
+            save.path=save.path,maxcv=maxcv, maxcv_stop = maxcv_stop, maxcv_autocheck = maxcv_autocheck,jam.nM.iter=jam.nM.iter,extra.java.arguments=extra.java.arguments)
     }, error = function(e) {
-        JAMmulti2(gwas.list, corX, ybar, Vy, N, 
-            r2 = 0.99, save.path,maxcv=maxcv,maxcv_stop = maxcv_stop, maxcv_autocheck = maxcv_autocheck,jam.nM.iter=jam.nM.iter,extra.java.arguments=extra.java.arguments)
+        JAMmulti2(gwas.list=gwas.list, corX=corX, ybar=ybar, Vy=Vy, N=N, 
+            r2 = 0.99, save.path=save.path,maxcv=maxcv,maxcv_stop = maxcv_stop, maxcv_autocheck = maxcv_autocheck,jam.nM.iter=jam.nM.iter,extra.java.arguments=extra.java.arguments)
     })
 }
 
 #' @title Wrapper for flashfm Multi-Trait Fine-Mapping with JAM  - this is the dynamic number of max causal variant version
 #' @param gwas.list List of M data.frame objects, where M is the number of traits (at most 6); gwas.list\[\[i\]\] is a data.frame for  trait i with 3 columns named: rsID, beta, EAF
 #' @param corX SNP correlation matrix  
-#' @param ybar trait mean; if trait is transformed to be standard Normal, set ybar = 0, which is default
+#' @param ybar trait mean vector; if not specified, the default is a vector of zeros
 #' @param N Vector of length M; Nall\[i\] is the (effective) sample size for  trait i
 #' @param save.path Path to save JAM output files; tmp files and could delete these later e.g. save.path=paste0(DIRout,"/tmpJAM/region1").
 #' @param TOdds target odds of no sharing to sharing; default is 1
@@ -378,12 +379,13 @@ JAMmulti.tries <- function (gwas.list, corX, ybar, Vy, N, save.path,maxcv=2,maxc
 #' @author Jenn Asimit
 #' @import R2BGLiMS
 #' @export
-FLASHFMwithJAMd <- function (gwas.list, corX, ybar, N, save.path, TOdds = 1, covY, 
+FLASHFMwithJAMd <- function (gwas.list, corX, ybar=NULL, N, save.path, TOdds = 1, covY, 
     cpp = 0.99, NCORES=1, maxcv=1, maxcv_stop = 20,jam.nM.iter=5, r2=0.8, extra.java.arguments=NULL) 
 {
     maxcv_autocheck = TRUE
-    M <- length(ybar)
+    M <- length(gwas.list)
     if(M>6 | M<2) stop("Need at least 2 and at most 6 traits.")
+     if(is.null(ybar)) ybar <- rep(0,M)
     for(i in 1:M) gwas.list[[i]] <- as.data.frame(gwas.list[[i]])
     Vy <- diag(covY)
     corX <- as.matrix(corX)
@@ -393,21 +395,21 @@ FLASHFMwithJAMd <- function (gwas.list, corX, ybar, N, save.path, TOdds = 1, cov
      }
     tmpdir <- paste0(save.path, "/tmp",sample(1:1000,1))   
     dir.create(tmpdir) 
-    main.input <- JAMmulti2(gwas.list, corX, ybar, Vy, N, 
-            r2 = r2, save.path,maxcv=maxcv,maxcv_stop = maxcv_stop, maxcv_autocheck = maxcv_autocheck,jam.nM.iter=jam.nM.iter,extra.java.arguments=extra.java.arguments)
+    main.input <- JAMmulti2(gwas.list=gwas.list, corX=corX, ybar=ybar, Vy=Vy, N=N, 
+            r2 = r2, save.path=save.path,maxcv=maxcv,maxcv_stop = maxcv_stop, maxcv_autocheck = maxcv_autocheck,jam.nM.iter=jam.nM.iter,extra.java.arguments=extra.java.arguments)
     gc(verbose = FALSE)
     ss.stats <- summaryStats(Xmat = FALSE, ybar.all = ybar, main.input = main.input)
     if(M<6) {
-     fm.multi <- flashfmU(main.input, TOdds = TOdds, covY, ss.stats, 
+     fm.multi <- flashfmU(main.input=main.input, TOdds = TOdds, covY=covY, ss.stats=ss.stats, 
         cpp = cpp, maxmod = NULL, fastapprox = FALSE, NCORES = NCORES)
     } 
     if(M==6) {
-     fm.multi <- flashfmU(main.input, TOdds = TOdds, covY, ss.stats, 
+     fm.multi <- flashfmU(main.input=main.input, TOdds = TOdds, covY=covY, ss.stats=ss.stats, 
         cpp = cpp, maxmod = NULL, fastapprox = TRUE, NCORES = NCORES)
     }
-    snpGroups <- makeSNPgroups2U(main.input, fm.multi, is.snpmat = FALSE, 
+    snpGroups <- makeSNPgroups2U(main.input=main.input, fm.multi=fm.multi, is.snpmat = FALSE, 
         min.mppi = 0.01, minsnpmppi = 0.01, r2.minmerge = 0.6)
-    mpp.pp <- PPsummarise(fm.multi, snpGroups, minPP = 0.01)
+    mpp.pp <- PPsummarise(fm.multi=fm.multi, snpGroups=snpGroups, minPP = 0.01)
     unlink(paste0(tmpdir,"/*"))
     return(list(mpp.pp = mpp.pp, snpGroups = snpGroups))
 }
@@ -452,7 +454,8 @@ JAMdynamic <- function(gwas, corX, ybar=0, Vy=1, N, cred=.99, save.path, maxcv=1
  raf <- raf[ksnp]
  corX <- corX[ksnp,ksnp]
  
- fm <- JAMcor.tries.maxcv(beta1, corX, raf, ybar, Vy, N, save.path, maxcv=maxcv, maxcv_stop = maxcv_stop, maxcv_autocheck = maxcv_autocheck,jam.nM.iter=jam.nM.iter, r2=r2, extra.java.arguments=extra.java.arguments)
+ fm <- JAMcor.tries.maxcv(beta1=beta1, corX=corX, raf=raf, ybar=ybar, Vy=Vy, N=N, save.path=save.path, maxcv=maxcv, maxcv_stop = maxcv_stop, 
+ maxcv_autocheck = maxcv_autocheck,jam.nM.iter=jam.nM.iter, r2=r2, extra.java.arguments=extra.java.arguments)
  ind <- order(fm$PP, decreasing = TRUE)
  pp <- fm$PP[ind]
  mod <- rownames(fm)[ind]
@@ -480,8 +483,8 @@ JAMcor.tries.maxcv <- function(beta1, corX, raf, ybar, Vy, N, save.path, maxcv=1
     
     tryCatch({
       
-      JAM_output <- JAMexpandedCor2(beta1, corX, raf, ybar, Vy, N, 
-            r2 = r2, save.path,maxcv=maxcv, maxcv_stop = maxcv_stop, maxcv_autocheck = maxcv_autocheck,jam.nM.iter=jam.nM.iter,extra.java.arguments=extra.java.arguments)
+      JAM_output <- JAMexpandedCor2(beta1=beta1, corX=corX, raf=raf, ybar=ybar, Vy=Vy, N=N, 
+            r2 = r2, save.path=save.path,maxcv=maxcv, maxcv_stop = maxcv_stop, maxcv_autocheck = maxcv_autocheck,jam.nM.iter=jam.nM.iter,extra.java.arguments=extra.java.arguments)
         
       maxcv_autocheck = FALSE
       print(paste0('Completed the process when ..., maxcv == ', maxcv))
@@ -507,10 +510,10 @@ JAMcor.tries.maxcv <- function(beta1, corX, raf, ybar, Vy, N, save.path, maxcv=1
 JAMcor.tries <- function (beta1, corX, raf, ybar, Vy, N, save.path,maxcv=2,maxcv_stop =20,maxcv_autocheck =TRUE,jam.nM.iter=1,extra.java.arguments=NULL) 
 {
     tryCatch({
-        JAMexpandedCor(beta1, corX, raf, ybar, Vy, N, r2 = 0.99, 
+        JAMexpandedCor(beta1=beta1, corX=corX, raf=raf, ybar=ybar, Vy=Vy, N=N, r2 = 0.99, 
             save.path,maxcv=maxcv, maxcv_stop = maxcv_stop, maxcv_autocheck = maxcv_autocheck,jam.nM.iter=jam.nM.iter,extra.java.arguments=extra.java.arguments)
     }, error = function(e) {
-        JAMexpandedCor2(beta1, corX, raf, ybar, Vy, N, 
+        JAMexpandedCor2(beta1=beta1, corX=corX, raf=raf, ybar=ybar, Vy=Vy, N=N, 
             r2 = 0.99, save.path,maxcv=maxcv, maxcv_stop = maxcv_stop, maxcv_autocheck = maxcv_autocheck,jam.nM.iter=jam.nM.iter,extra.java.arguments=extra.java.arguments)
     })
 }
@@ -538,7 +541,7 @@ JAMexpandedCor <- function (beta1, corX, raf, ybar, Vy, N, r2 = 0.99, save.path,
 
         BETA <- beta1[colnames(refG)]
         mafs.ref <- maf[colnames(refG)]
-        topmods <- JAM.tries.maxcv(BETA,Vy,refG,mafs.ref,N,save.path,maxcv=maxcv, maxcv_stop = maxcv_stop, maxcv_autocheck = maxcv_autocheck,jam.nM.iter=jam.nM.iter,extra.java.arguments=extra.java.arguments)
+		 topmods <- JAM.tries.maxcv(BETA=BETA,Vy=Vy,refG=refG,mafs.ref=mafs.ref,N=N,save.path=save.path,maxcv=maxcv, maxcv_stop = maxcv_stop, maxcv_autocheck = maxcv_autocheck,jam.nM.iter=jam.nM.iter,extra.java.arguments=extra.java.arguments)
 #          jam.results <- R2BGLiMS::JAM(marginal.betas = BETA, trait.variance = Vy, 
 #            cor.ref = refG, mafs.ref = mafs.ref, model.space.priors = list(a = 1, 
 #                b = length(BETA), Variables = names(BETA)), max.model.dim = maxcv, 
@@ -621,12 +624,12 @@ JAMexpandedCor2 <- function (beta1, corX, raf, ybar, Vy, N, r2 = 0.99, save.path
     reftags <- cor.refdata2_mod(corX, beta=beta1[snps], MAF=maf[snps], r2 = r2)
     refGt <- reftags$refG
     taglist <- reftags$taglist
-
-		refG <- lqmm::make.positive.definite(refGt)
+	rm(reftags)
+	refG <- lqmm::make.positive.definite(refGt)
 		
         BETA <- beta1[colnames(refG)]
         mafs.ref <- maf[colnames(refG)]
-		 topmods <- JAM.tries.maxcv(BETA,Vy,refG,mafs.ref,N,save.path,maxcv=maxcv, maxcv_stop = maxcv_stop, maxcv_autocheck = maxcv_autocheck,jam.nM.iter=jam.nM.iter,extra.java.arguments=extra.java.arguments)
+		 topmods <- JAM.tries.maxcv(BETA=BETA,Vy=Vy,refG=refG,mafs.ref=mafs.ref,N=N,save.path=save.path,maxcv=maxcv, maxcv_stop = maxcv_stop, maxcv_autocheck = maxcv_autocheck,jam.nM.iter=jam.nM.iter,extra.java.arguments=extra.java.arguments)
 #         jam.results <- R2BGLiMS::JAM(marginal.betas = BETA, trait.variance = Vy, 
 #            cor.ref = refG, mafs.ref = mafs.ref, model.space.priors = list(a = 1, 
 #                b = length(BETA), Variables = names(BETA)), max.model.dim = maxcv, 

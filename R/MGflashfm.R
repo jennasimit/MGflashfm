@@ -50,7 +50,7 @@ MGFLASHFMwithJAM <- function(gwas.list, LD.list, covY.list, Nall, multi=TRUE, TO
  
   flashfm.out <- ssnps <- allflashfmPP <- vector("list",S)
   for(i in 1:S) {
-   flashfm.out[[i]] <- FLASHFMwithJAMd(gwas.list[[i]], LD.list[[i]], ybar, Nall[[i]], save.path=save.path, TOdds = TOdds, covY=covY.list[[i]], 
+   flashfm.out[[i]] <- FLASHFMwithJAMd(gwas.list=gwas.list[[i]], corX=LD.list[[i]], ybar=ybar, N=Nall[[i]], save.path=save.path, TOdds = TOdds, covY=covY.list[[i]], 
                         cpp = cpp, NCORES=NCORES, maxcv=maxcv, maxcv_stop = maxcv_stop,jam.nM.iter=jam.nM.iter,r2=r2,extra.java.arguments=extra.java.arguments)
 	ssnps[[i]] <- Reduce(intersect,lapply(gwas.list[[i]],function(x) x$rsID))
 	allflashfmPP[[i]] <- flashfm.out[[i]]$mpp.pp
@@ -59,7 +59,7 @@ MGFLASHFMwithJAM <- function(gwas.list, LD.list, covY.list, Nall, multi=TRUE, TO
   
   allsnps <- Reduce(union,ssnps)
   
-  csta <- MGflashfm(allflashfmPP,Nall,allsnps,cred=cred,multi=multi,cpp=cpp,NCORES=NCORES)
+  csta <- MGflashfm(allflashfmPP=allflashfmPP, Nall=Nall, snps=allsnps, cred=cred, multi=multi, cpp=cpp, NCORES=NCORES)
 
   cstaMAF <- vector("list",length(csta$summary))
   for(i in 1:length(csta$summary)) {
@@ -150,8 +150,8 @@ MGflashfmRET <- function(gwas.list,flashfm.list,Nall,cred=0.99,multi=FALSE,cpp=0
    }
    names(allflashfmPP) <- studies  
    allsnps <- Reduce(union,ssnps)
- 
-   csta <- MGflashfm(allflashfmPP,Nall,allsnps,cred=cred,multi=multi,cpp=cpp,NCORES=NCORES)
+
+   csta <- MGflashfm(allflashfmPP=allflashfmPP, Nall=Nall, snps=allsnps, cred=cred,multi=multi,cpp=cpp,NCORES=NCORES)
  
   cstaMAF <- vector("list",length(csta$summary))
    for(i in 1:length(csta$summary)) {
@@ -222,7 +222,7 @@ fmta <-vector("list",M)
 ivec <- vector("list",M)
 for(i in 1:M) ivec[[i]] <- i
 #for(i in 1:M) {print(i); fmta[[i]] <- fmta1(i,allflashfmPP,Nall,snps,cred,multi)}
-fmta <- parallel::mclapply(ivec,fmta1,allflashfmPP,Nall,snps,cred,multi,cpp.thr,mc.cores =NCORES)	
+fmta <- parallel::mclapply(ivec,fmta1,allflashfmPP=allflashfmPP,Nall=Nall,snps=snps,cred=cred,multi=multi,cpp.thr=cpp.thr,mc.cores =NCORES)	
 names(fmta) <- traits
  
  if(is.null(names(allflashfmPP))) {
@@ -259,7 +259,7 @@ fmta1 <- function(i,allflashfmPP,Nall,snps,cred,multi,cpp.thr=0.99) {
   	N <- c(N,Nall[[j]][i])
   	}
 
-  fmta <- flashfmTA1(flashfm.out, N, snps, cred=cred,multi,cpp.thr)  # trans-ancestry flashfm trait i
+  fmta <- flashfmTA1(flashfm.out1=flashfm.out, N=N, snps=snps, cred=cred,multi=multi,cpp.thr=cpp.thr)  # trans-ancestry flashfm trait i
   return(fmta)
 }  
 
@@ -290,7 +290,7 @@ flashfmTA1 <- function (flashfm.out1, N,snps,cred=0.99,multi,cpp.thr=0.99)
  bestmod.thr <- vector("list", A)
     for (i in 1:A) {
     	tmp <- PP2snpmod(data.frame(PP=PP[[i]],str=STR[[i]]))
-        bm <- best.models.cpp(tmp, cpp.thr = cpp.thr)
+        bm <- best.models.cpp(d=tmp, cpp.thr = cpp.thr)
         bestmod.thr[[i]] <- bm$models
     }
     STR <- lapply(bestmod.thr, "[[", "str")

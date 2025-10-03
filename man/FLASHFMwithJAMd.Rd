@@ -7,7 +7,7 @@
 FLASHFMwithJAMd(
   gwas.list,
   corX,
-  ybar,
+  ybar = NULL,
   N,
   save.path,
   TOdds = 1,
@@ -26,7 +26,7 @@ FLASHFMwithJAMd(
 
 \item{corX}{SNP correlation matrix}
 
-\item{ybar}{trait mean; if trait is transformed to be standard Normal, set ybar = 0, which is default}
+\item{ybar}{trait mean vector; if not specified, the default is a vector of zeros}
 
 \item{N}{Vector of length M; Nall[i] is the (effective) sample size for  trait i}
 

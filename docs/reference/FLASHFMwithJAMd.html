@@ -50,7 +50,7 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">FLASHFMwithJAMd</span><span class="op">(</span></span>
 <span>  <span class="va">gwas.list</span>,</span>
 <span>  <span class="va">corX</span>,</span>
-<span>  <span class="va">ybar</span>,</span>
+<span>  ybar <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">N</span>,</span>
 <span>  <span class="va">save.path</span>,</span>
 <span>  TOdds <span class="op">=</span> <span class="fl">1</span>,</span>
@@ -76,7 +76,7 @@
 
 
 <dt>ybar</dt>
-<dd><p>trait mean; if trait is transformed to be standard Normal, set ybar = 0, which is default</p></dd>
+<dd><p>trait mean vector; if not specified, the default is a vector of zeros</p></dd>
 
 
 <dt>N</dt>

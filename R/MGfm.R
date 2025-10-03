@@ -164,7 +164,8 @@ jamfn <- function(i,beta.list,corX.list,raf.list,ybar,Vy,Nall,save.path,maxcv,ma
  JAMcor.tries.maxcv(beta.list[[i]], corX.list[[i]], raf.list[[i]], ybar=0, Vy=1, 
   Nall[i], paste0(save.path,"/a",i), maxcv=maxcv, maxcv_stop = maxcv_stop, maxcv_autocheck = maxcv_autocheck,jam.nM.iter=jam.nM.iter,r2=r2,extra.java.arguments=extra.java.arguments)}
 
-stfm <- parallel::mclapply(ivec,jamfn,beta.list,corX.list,raf.list,ybar=0, Vy=1,Nall,save.path, mc.cores =NCORES,maxcv,maxcv_stop,maxcv_autocheck,extra.java.arguments)	
+stfm <- parallel::mclapply(ivec,jamfn,beta.list=beta.list,corX.list=corX.list,raf.list=raf.list,ybar=0, Vy=1,Nall=Nall,save.path=save.path, 
+maxcv=maxcv,maxcv_stop=maxcv_stop,maxcv_autocheck=maxcv_autocheck,extra.java.arguments=extra.java.arguments,mc.cores =NCORES)	
 
 for(i in 1:A) unlink(paste0(save.path,"/a",i,"/*"))
 
