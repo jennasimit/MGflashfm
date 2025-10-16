@@ -1,3 +1,36 @@
+tagexpand.mod <- function (snpmod, taglist) 
+{
+    if (snpmod == "1") {
+        df <- data.frame(str = snpmod, snps = snpmod, size = 0, 
+            tag = FALSE, stringsAsFactors = FALSE)
+    }
+    else {
+        snps <- unlist(strsplit(snpmod, "%", fixed = TRUE))
+        ns <- length(snps)
+        tsnps <- vector("list", ns)
+        for (i in 1:ns) {
+            # exact match instead of grep
+            idx <- which(vapply(taglist, function(el) any(el$snps == snps[i]), logical(1)))
+            if (length(idx) == 0L) {
+                stop(sprintf("No exact match for '%s' found in taglist", snps[i]))
+            }
+            tsnps[[i]] <- unique(unlist(taglist[idx]))
+        }
+        emods <- expand.grid(tsnps, stringsAsFactors = FALSE)
+        out <- apply(emods, 1, function(x) {
+            paste0(x, collapse = "%")
+        })
+        Imod <- which(out == snpmod)
+        istag <- rep(TRUE, length(out))
+        istag[Imod] <- FALSE
+        df <- data.frame(str = snpmod, snps = out, size = ns, 
+            tag = istag, stringsAsFactors = FALSE)
+    }
+    return(df)
+}
+
+
+
 cor.refdata2_mod <- function(corX, beta, MAF = NULL, r2 = 0.99) {
   # corX: precomputed correlation matrix (SNP x SNP)
   # beta: named vector of effect sizes for SNPs
@@ -285,12 +318,17 @@ JAMmulti2 <- function (gwas.list, corX, ybar, Vy, N, r2 = 0.99, save.path, maxcv
         binout <- as.matrix(topmods[, -ncol(topmods)])
         colnames(binout) <- colnames(topmods)[-ncol(topmods)]
         snpmods <- apply(binout, 1, mod.fn)
-        nmod <- apply(binout, 1, sum)
-        PP <- topmods[, ncol(topmods)]
-        snpPP <- data.frame(rank = 1:length(nmod), size = nmod, 
-            logPP = log(PP), PP = PP, str = snpmods, snps = snpmods, 
+        
+         # for any models that have a pair of snps with abs(cor) > 0.8, remove one from the pair with largest mag beta until no pairs have high cor       
+        snpmods <- prune_models_by_corr(snpmods=snpmods, corX=refG, beta=BETA, thr = 0.8)
+  		nmod <- lengths(strsplit(snpmods, "%", fixed = TRUE))
+        
+ #       nmod <- apply(binout, 1, sum)
+ #       PP <- topmods[, ncol(topmods)]
+         snpPP <- data.frame(rank = seq_along(nmod), size = nmod, 
+             str = snpmods, snps = snpmods, 
             stringsAsFactors = FALSE)
-        snpPP <- snpPP[order(snpPP$PP, decreasing = TRUE), ]
+ #       snpPP <- snpPP[order(snpPP$PP, decreasing = TRUE), ]
         expmods <- rlist::list.stack(lapply(snpPP$snps, tagexpand.mod, 
             taglist = taglist))
         wh <- which(duplicated(expmods$snps))
@@ -298,26 +336,55 @@ JAMmulti2 <- function (gwas.list, corX, ybar, Vy, N, r2 = 0.99, save.path, maxcv
             expmods <- expmods[-wh, ]
         }
         row.names(expmods) <- expmods$snps
-        check <- sapply(strsplit(expmods[, 2], "%"), function(x) length(x) > 
+        check <- sapply(strsplit(expmods[, 2], "%", fixed = TRUE), function(x) length(x) > 
             length(unique(x)))
         if (sum(check) > 0) 
             expmods <- expmods[-which(check), ]
-        mbeta <- lapply(expmods[, 2], multibeta, beta1[[j]], 
-            covX, N = N[j], ybar = ybar[j], is.snpmat = FALSE, 
-            raf = raf)
-        names(mbeta) <- expmods[, 2]
-        SSy[[j]] <- Vy[j] * (N[j] - 1) + N[j] * ybar[j]^2
-        Vx <- diag(covX)
+        
+        Vy_j <- Vy[j]
+		N_j  <- N[j] 
+		beta1_j <- beta1[[j]]   
+		ybar_j <- ybar[j]
+
+            
+#        mbeta <- lapply(expmods[, 2], multibeta, beta1[[j]], 
+#            covX, N = N[j], ybar = ybar[j], is.snpmat = FALSE, 
+#            raf = raf)
+#        names(mbeta) <- expmods[, 2]
+
+		mbeta_for_mod <- function(mod) {
+  			out <- multibeta(mod, beta1_j, covX, N = N_j, ybar = ybar_j, is.snpmat = FALSE, raf = raf)
+  			if(mod != "1") modname <- paste(rownames(out)[-1], collapse = "%") # not including intercept in name
+  			if(mod == "1") modname <- "1"
+  			setNames(list(out), modname)
+		}
+		
+		mbeta <- do.call(c, lapply(expmods[, 2], mbeta_for_mod))
+
+        SSy[[j]] <- Vy_j * (N_j - 1) + N_j * ybar_j^2
+        SSy_j <- SSy[[j]]
+         Vx <- diag(covX)
         Mx <- 2 * raf
-        Sxy[[j]] <- c(Sxy.hat(beta1 = beta1[[j]], Mx = Mx, N = N[j], 
-            Vx = Vx, muY = ybar[j]), `1` = ybar[j] * N[j])
+        
+       Sxy[[j]] <- c(Sxy.hat(beta1 = beta1_j, Mx = Mx, N = N_j, 
+            Vx = Vx, muY = ybar_j), `1` = ybar_j * N_j)
         names(Sxy[[j]])[length(Sxy[[j]])] <- "one"
-        lABF <- sapply(expmods$snps, calcABF, mbeta, SSy = SSy[[j]], 
-            Sxy = Sxy[[j]], Vy = Vy[j], N = N[j])
-        names(lABF) <- expmods$snps
-        wh <- which(expmods$snps == "1")
+        Sxy_j <- Sxy[[j]]
+        
+#        lABF <- sapply(expmods$snps, calcABF, mbeta, SSy = SSy[[j]], 
+#            Sxy = Sxy[[j]], Vy = Vy[j], N = N[j])
+#        names(lABF) <- expmods$snps
+
+		abf_for_mod <- function(mod) {
+  			calcABF(mod, mbeta, SSy_j, Sxy_j, Vy_j, N_j)
+			}
+		expmodnames <- names(mbeta)
+		lABF <- vapply(expmodnames, abf_for_mod, numeric(1))
+		names(lABF) <- expmodnames        
+
+        wh <- which(expmodnames == "1")
         if (!length(wh)) {
-            dd[[j]] <- data.frame(model = c("1", expmods$snps), 
+            dd[[j]] <- data.frame(model = c("1", expmodnames), 
                 tag = c(FALSE, expmods$tag), lBF = c(0, lABF), 
                 stringsAsFactors = FALSE)
             l1 <- multibeta("1", beta1[[j]], covX, N = N[j], 
@@ -325,7 +392,7 @@ JAMmulti2 <- function (gwas.list, corX, ybar, Vy, N, r2 = 0.99, save.path, maxcv
             mbeta <- rlist::list.append(mbeta, `1` = l1)
         }
         else {
-            dd[[j]] <- data.frame(model = expmods$snps, tag = expmods$tag, 
+            dd[[j]] <- data.frame(model = expmodnames, tag = expmods$tag, 
                 lBF = lABF, stringsAsFactors = FALSE)
         }
         SM <- makesnpmod(dd[[j]], expected = 2, nsnps = nsnps)
@@ -415,6 +482,155 @@ FLASHFMwithJAMd <- function (gwas.list, corX, ybar=NULL, N, save.path, TOdds = 1
 }
 
 
+
+prune_models_by_corr <- function(snpmods, corX, beta, thr = 0.8) {
+  pruned <- character(length(snpmods))
+
+  # ensure beta is named; if some SNPs missing in beta, treat their beta as 0
+  if (is.null(names(beta))) stop("beta must be a named vector")
+  
+  for (i in seq_along(snpmods)) {
+    snps <- unlist(strsplit(snpmods[i], "%", fixed = TRUE))
+    # keep only SNPs that exist in corX
+    snps <- snps[snps %in% rownames(corX)]
+    if (length(snps) <= 1L) {
+      pruned[i] <- paste(snps, collapse = "%")
+      next
+    }
+
+    # iterative pruning until all pairwise |r| < thr
+    repeat {
+      subcor <- abs(corX[snps, snps, drop = FALSE])
+      diag(subcor) <- 0
+      max_r <- max(subcor, na.rm = TRUE)
+      if (is.na(max_r) || max_r < thr) break
+
+      # take the first pair that attains the max correlation
+      pair_idx <- which(subcor == max_r, arr.ind = TRUE)[1, , drop = TRUE]
+      s1 <- snps[pair_idx[1]]
+      s2 <- snps[pair_idx[2]]
+
+      # get |beta| (missing names -> treated as 0)
+      b1 <- if (!is.na(beta[s1])) abs(beta[s1]) else 0
+      b2 <- if (!is.na(beta[s2])) abs(beta[s2]) else 0
+
+      # drop the SNP with the smaller |beta|; if equal, drop s2
+      drop_snp <- if (b1 < b2) s1 else s2
+      snps <- setdiff(snps, drop_snp)
+
+      if (length(snps) <= 1L) break
+    }
+
+    pruned[i] <- paste(snps, collapse = "%")
+  }
+
+  # return unique pruned models
+  pruned_models <- unique(pruned)
+  pruned_models <- pruned_models[nzchar(pruned_models)]
+  
+  return(pruned_models)
+}
+
+
+#' @title Calculate approximate Bayes' factor (ABF) 
+#' @param mod joint SNP model with snps separated by \code{"\%"} e.g. \code{"snp1\%snp2"}
+#' @param mbeta joint effect estimates for SNPs in model given by mod; output from multibeta
+#' @param SSy sum(y.squared) for trait y
+#' @param Sxy vector of sum(xy) for snp x, trait y
+#' @param Vy trait variance
+#' @param N sample size
+#' @return ABF for model mod
+#' @author Jenn Asimit
+calcABFo <- function(mod,mbeta,SSy,Sxy,Vy,N) {
+ if(mod=="1") { msnps <- "one"
+ } else { msnps <- c("one", unlist(strsplit(mod, "%", fixed = TRUE))) }
+ beta <- mbeta[[mod]]
+ num <- SSy-sum(Sxy[msnps]*beta)
+ den <- (N-1)*Vy
+ k <- length(msnps)-1
+ out <- -N*.5*log(num/den)-0.5*k*log(N)
+ return(out)
+}
+
+
+calcABF <- compiler::cmpfun(calcABFo)
+
+#' @title Using summary statistics, calculates joint effect estimates
+#' @param mod joint SNP model with snps separated by \code{"\%"} e.g. \code{"snp1\%snp2"}
+#' @param beta1 named vector single-SNP effect estimates; each effect estimate has name given by SNP id and ids must appear in Gmat columns
+#' @param Gmat genotype matrix with SNP columns and individuals rows; could be reference matrix or from sample
+#' @param N sample size for trait 
+#' @param ybar trait mean
+#' @param is.snpmat logical taking value TRUE when Gmat is a genotype matrix and FALSE when Gmat is a SNP covariance matrix
+#' @param raf named vector of SNP reference allele frequencies (must match SNP coding used for effect estimates); only needed if Gmat is a covariance matrix
+#' @param high_beta_thresh if absolute value of effect estimate < nigh_beta_thresh, the model is re-fit after checking for and removing variants to avoid high correlation
+#' @return joint effect estimates for SNPs in model given by mod
+#' @author Jenn Asimit
+multibetao <- function(mod,beta1,Gmat,N,ybar,is.snpmat,raf=NULL,high_beta_thresh=5) {
+
+ if(mod == "1") {
+  mbeta <- ybar; names(mbeta) <- "one"
+ } else {
+  msnps <- unlist(strsplit(mod, "%", fixed = TRUE))
+  if(all(msnps %in% names(beta1))) { 
+   B <- beta1[msnps]
+   if(is.snpmat) {  
+     if(all(msnps %in% colnames(Gmat))){ mbeta <- JAM_PointEstimates_updated(B,X.ref=as.matrix(Gmat[,msnps]),n=N,ybar=ybar)
+       } else { mbeta <- NA}
+     } else { 
+ 	       colnames(Gmat) <- names(raf)
+ 	       rownames(Gmat) <- names(raf)
+ 	       if(all(msnps %in% colnames(Gmat))) { 
+ 	       
+ 	   #  extract covariance submatrix
+          Xcov <- as.matrix(Gmat[msnps, msnps, drop = FALSE])
+          # ensure exact symmetry
+          Xcov <- (Xcov + t(Xcov)) / 2
+
+          # check eigenvalues for positive-definiteness 
+          eigvals <- eigen(Xcov, symmetric = TRUE, only.values = TRUE)$values
+          tol <- 1e-10  # tolerance for tiny negative eigenvalues
+
+          if (min(eigvals, na.rm = TRUE) < -tol) {
+            # matrix is numerically non-PSD — attempt to fix, preferring lqmm if available
+            fixed <- FALSE
+ 	       
+ 	       try({
+                Xcov <- lqmm::make.positive.definite(Xcov)
+                Xcov <- (Xcov + t(Xcov)) / 2
+                fixed <- TRUE
+              }, silent = TRUE)
+              
+           # as a final guard, add a very small ridge to ensure numerical PD
+            Xcov <- Xcov + diag(1e-12, nrow(Xcov))
+          } else {
+            # if smallest eigenvalue is only slightly negative within tolerance,
+            # add a tiny ridge to be safe
+            Xcov <- Xcov + diag(1e-12, nrow(Xcov))
+          }   
+ 	       
+ 	       mbeta <- JAM_PointEstimates_Xcov(B,Xcov=Xcov,raf=raf[msnps],n=N,ybar=ybar)  
+ 	       
+ 	       # check for unusually high effects
+ 	        corX <- cov2cor(Xcov)
+          if(!is.na(mbeta)[1] && !is.null(corX) && max(abs(mbeta)) > high_beta_thresh && length(msnps) > 1) {
+                      
+            pruned_mod <- prune_models_by_corr(snpmods = mod, corX = corX, beta = B, thr = 0.7)
+            msnps <- unlist(strsplit(pruned_mod, "%", fixed = TRUE))
+            B <- beta1[msnps]
+            Xcov <- as.matrix(Gmat[msnps, msnps, drop = FALSE])
+            Xcov <- (Xcov + t(Xcov)) / 2
+            mbeta <- JAM_PointEstimates_Xcov(B, Xcov = Xcov, raf = raf[msnps], n = N, ybar = ybar)        	       
+ 	          } 
+ 	       }else { mbeta <- NA}
+ 	       }
+   } else {mbeta <- NA }
+ }
+ 
+ return(mbeta)
+} 
+
+multibeta <- compiler::cmpfun(multibetao)
 
 
 ########
@@ -641,12 +857,17 @@ JAMexpandedCor2 <- function (beta1, corX, raf, ybar, Vy, N, r2 = 0.99, save.path
         binout <- as.matrix(topmods[, -ncol(topmods)])
         colnames(binout) <- colnames(topmods)[-ncol(topmods)]
         snpmods <- apply(binout, 1, mod.fn)
-        nmod <- apply(binout, 1, sum)
-        PP <- topmods[, ncol(topmods)]
-        snpPP <- data.frame(rank = 1:length(nmod), size = nmod, 
-            logPP = log(PP), PP = PP, str = snpmods, snps = snpmods, 
+        
+         # for any models that have a pair of snps with abs(cor) > 0.8, remove one from the pair with largest mag beta until no pairs have high cor       
+        snpmods <- prune_models_by_corr(snpmods=snpmods, corX=refG, beta=BETA, thr = 0.8)
+  		nmod <- lengths(strsplit(snpmods, "%", fixed = TRUE))
+          
+ #       nmod <- apply(binout, 1, sum)
+ #       PP <- topmods[, ncol(topmods)]
+         snpPP <- data.frame(rank = seq_along(nmod), size = nmod, 
+             str = snpmods, snps = snpmods, 
             stringsAsFactors = FALSE)
-        snpPP <- snpPP[order(snpPP$PP, decreasing = TRUE), ]
+#        snpPP <- snpPP[order(snpPP$PP, decreasing = TRUE), ]
         expmods <- rlist::list.stack(lapply(snpPP$snps, tagexpand.mod, 
             taglist = taglist))
         wh <- which(duplicated(expmods$snps))
@@ -654,26 +875,51 @@ JAMexpandedCor2 <- function (beta1, corX, raf, ybar, Vy, N, r2 = 0.99, save.path
             expmods <- expmods[-wh, ]
         }
         row.names(expmods) <- expmods$snps
-        check <- sapply(strsplit(expmods[, 2], "%"), function(x) length(x) > 
+        check <- sapply(strsplit(expmods[, 2], "%", fixed = TRUE), function(x) length(x) > 
             length(unique(x)))
         if (sum(check) > 0) 
             expmods <- expmods[-which(check), ]
-        mbeta <- lapply(expmods[, 2], multibeta, beta1, 
-            covX, N = N, ybar = ybar, is.snpmat = FALSE, 
-            raf = raf)
-        names(mbeta) <- expmods[, 2]
-        SSy <- Vy * (N - 1) + N * ybar^2
+            
+        Vy_j <- Vy
+		N_j  <- N 
+		beta1_j <- beta1   
+		ybar_j <- ybar
+    
+            
+#        mbeta <- lapply(expmods[, 2], multibeta, beta1, 
+#            covX, N = N, ybar = ybar, is.snpmat = FALSE, 
+#            raf = raf)
+#        names(mbeta) <- expmods[, 2]
+
+		mbeta_for_mod <- function(mod) {
+  			out <- multibeta(mod, beta1_j, covX, N = N_j, ybar = ybar_j, is.snpmat = FALSE, raf = raf)
+  			if(mod != "1") modname <- paste(rownames(out)[-1], collapse = "%") # not including intercept in name
+  			if(mod == "1") modname <- "1"
+  			setNames(list(out), modname)
+		}
+		
+		mbeta <- do.call(c, lapply(expmods[, 2], mbeta_for_mod))
+
+
+        SSy_j <- Vy_j * (N_j - 1) + N_j * ybar_j^2
+        
         Vx <- diag(covX)
         Mx <- 2 * raf
-        Sxy <- c(Sxy.hat(beta1 = beta1, Mx = Mx, N = N, 
-            Vx = Vx, muY = ybar), `1` = ybar * N)
-        names(Sxy)[length(Sxy)] <- "one"
-        lABF <- sapply(expmods$snps, calcABF, mbeta, SSy = SSy, 
-            Sxy = Sxy, Vy = Vy, N = N)
-        names(lABF) <- expmods$snps
-        wh <- which(expmods$snps == "1")
+        Sxy_j <- c(Sxy.hat(beta1 = beta1_j, Mx = Mx, N = N_j, 
+            Vx = Vx, muY = ybar_j), `1` = ybar_j * N_j)
+        names(Sxy_j)[length(Sxy_j)] <- "one"
+       
+ 
+		abf_for_mod <- function(mod) {
+  			calcABF(mod, mbeta, SSy_j, Sxy_j, Vy_j, N_j)
+			}
+		expmodnames <- names(mbeta)
+		lABF <- vapply(expmodnames, abf_for_mod, numeric(1))
+		 names(lABF) <- expmodnames
+		        
+        wh <- which(expmodnames == "1")
         if (!length(wh)) {
-            dd <- data.frame(model = c("1", expmods$snps), 
+            dd <- data.frame(model = c("1", expmodnames), 
                 tag = c(FALSE, expmods$tag), lBF = c(0, lABF), 
                 stringsAsFactors = FALSE)
             l1 <- multibeta("1", beta1, covX, N = N, 
@@ -681,7 +927,7 @@ JAMexpandedCor2 <- function (beta1, corX, raf, ybar, Vy, N, r2 = 0.99, save.path
             mbeta <- rlist::list.append(mbeta, `1` = l1)
         }
         else {
-            dd <- data.frame(model = expmods$snps, tag = expmods$tag, 
+            dd <- data.frame(model = expmodnames, tag = expmods$tag, 
                 lBF = lABF, stringsAsFactors = FALSE)
         }
         SM <- makesnpmod(dd, expected = 2, nsnps = nsnps)
@@ -717,3 +963,45 @@ allcredsetsPP <- function (mpp.pp, cred = 0.99)
     return(list(fm = csfm, flashfm = csflfm, cred = cred))
 }
 
+JAM_PointEstimates_updated <- function (marginal.betas = NULL, X.ref = NULL, n = NULL, ybar) 
+{
+    n.ref <- nrow(X.ref)
+    if (is.null(n)) {
+        n <- n.ref
+    }
+    z <- rep(NA, length(marginal.betas))
+    names(z) <- names(marginal.betas)
+    for (v in 1:length(marginal.betas)) {
+        y.pred <- X.ref[, v] * marginal.betas[v]
+        y.pred.centered <- y.pred - mean(y.pred)
+        z[v] <- X.ref[, v] %*% y.pred.centered
+    }
+    z <- z * n/n.ref
+    xbar <- apply(X.ref, 2, mean)
+    for (v in 1:ncol(X.ref)) {
+        X.ref[, v] <- X.ref[, v] - xbar[v]
+    }
+    xtx <- (t(X.ref) %*% X.ref) * n/n.ref
+    multivariate.beta.hat <- solve(xtx) %*% z
+    b0 <- ybar - sum(xbar * multivariate.beta.hat)
+    out <- rbind(b0, multivariate.beta.hat)
+    rownames(out) <- c("one", names(marginal.betas))
+    return(out)
+}
+
+
+JAM_PointEstimates_Xcov <- function (marginal.betas = NULL, Xcov = NULL, raf, n, ybar) 
+{
+    xbar <- 2 * raf
+    z <- rep(NA, length(marginal.betas))
+    names(z) <- names(marginal.betas)
+    for (v in 1:length(marginal.betas)) {
+        z[v] <- n * (marginal.betas[v] * Xcov[v, v])
+    }
+    xtx <- n * (Xcov)
+    multivariate.beta.hat <- as.vector(solve(xtx) %*% z)
+    b0 <- ybar - sum(as.vector(xbar) * multivariate.beta.hat)
+    out <- matrix(c(b0, multivariate.beta.hat), ncol = 1)
+    rownames(out) <- c("one", names(marginal.betas))
+    return(out)
+}

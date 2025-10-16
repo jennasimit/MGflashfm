@@ -1,12 +1,13 @@
 mod.fn <- flashfm:::mod.fn
-tagexpand.mod <- flashfm:::tagexpand.mod
-multibeta <- flashfm:::multibeta
+#tagexpand.mod <- flashfm:::tagexpand.mod
+#multibeta <- flashfm:::multibeta
 Sxy.hat <- flashfm:::Sxy.hat
-calcABF <- flashfm:::calcABF
+#calcABF <- flashfm:::calcABF
 makesnpmod <- flashfm:::makesnpmod
 makestr <- flashfm:::makestr
 marg.snps <- flashfm:::marg.snps
-calckappa <- flashfm:::calckappa
+#calckappa <- flashfm:::calckappa
+odds_no_sharing <- flashfm:::odds_no_sharing
 marginalpp <- flashfm:::marginalpp
 MPP.fn <- flashfm:::MPP.fn
 PP2snpmod <- flashfm:::PP2snpmod
@@ -20,10 +21,11 @@ calc.maxmin <- flashfm:::calc.maxmin
 LinearizeNestedList <- flashfm:::LinearizeNestedList
 best.snps <- flashfm:::best.snps
 
+
 #' @importFrom Matrix sparseMatrix
 #' @importFrom gtools smartbind
 #' @importFrom methods is new
-#' @importFrom stats as.dendrogram as.dist cor cov2cor hclust is.leaf quantile median
+#' @importFrom stats as.dendrogram as.dist cor cov2cor hclust is.leaf quantile median dbinom optim setNames
 #' @importFrom parallel mclapply
 #' @importFrom lqmm make.positive.definite
 #' @import flashfm 
