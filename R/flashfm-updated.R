@@ -454,6 +454,7 @@ FLASHFMwithJAMd <- function (gwas.list, corX, ybar=NULL, N, save.path, TOdds = 1
     if(M>6 | M<2) stop("Need at least 2 and at most 6 traits.")
      if(is.null(ybar)) ybar <- rep(0,M)
     for(i in 1:M) gwas.list[[i]] <- as.data.frame(gwas.list[[i]])
+    covY <- as.matrix(covY)
     Vy <- diag(covY)
     corX <- as.matrix(corX)
     if(!dir.exists(save.path)) {
